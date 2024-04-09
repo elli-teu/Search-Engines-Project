@@ -1,0 +1,21 @@
+import os
+FPS = 30
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+DARK_GREY = (50, 50, 50)
+GREY = (100, 100, 100)
+LIGHT_GREY = (169, 169, 169)
+WHITE = (255, 255, 255)
+SADDLE_BROWN = (139, 69, 19)
+SIENNA = (160, 82, 45)
+standard_font_size = 40
+card_aspect_ratio = 1.45843230404
+standard_card_width = 110
+standard_card_height = round(standard_card_width * card_aspect_ratio)
+standard_space = 10
+standard_text_offset = 10
+large_card_width = 300
+large_card_height = round(large_card_width * card_aspect_ratio)
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+image_location = ROOT_DIR + "/Images/"
+allowed_image_types = [".png", ".jpg", ".jpeg"]
