@@ -48,6 +48,11 @@ class MainScene(Scene):
                                       left_click_function=set_query_type,
                                       left_click_args=[search.QueryType.phrase_query],
                                       name="phrase_button")
+        vector_button = assets.Button(phrase_button.x + phrase_button.width + standard_space,
+                              y=30, height=0, resize_to_fit_text=True, text="Vector Search", font_size=20,
+                              left_click_function=set_query_type,
+                              left_click_args=[search.QueryType.vector_query],
+                              name="vector_button")
 
         number_box = assets.Box(x=environment.get_width() / 2 - 194 / 2, y=150, height=30, width=194, color=GREY,
                                 text=f"Number of results:", font_size=15, text_offset=5,
@@ -57,7 +62,7 @@ class MainScene(Scene):
         self.add_object(number_box)
 
 
-        objects = [search_box, search_button, union_button, intersection_button, phrase_button]
+        objects = [search_box, search_button, union_button, intersection_button, phrase_button, vector_button]
         self.add_multiple_objects(objects)
 
         return self
@@ -70,7 +75,9 @@ def set_query_type(query_type):
                                                       "intersection_button")
     phrase_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
                                                 "phrase_button")
-    buttons = [union_button, intersection_button, phrase_button]
+    vector_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
+                                                "vector_button")
+    buttons = [union_button, intersection_button, phrase_button, vector_button]
     for button in buttons:
         if query_type in button.name:
             button.set_color(BLUE)
