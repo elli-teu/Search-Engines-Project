@@ -1,6 +1,7 @@
 import json
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, helpers
 import os
+import pandas as pd
 from setup import ADDRESS, API_KEY, INDEX
 
 
@@ -40,6 +41,71 @@ def index_transcripts_from_folder(folder_path, index_name):
                             client.index(index=index_name, body=contents)
                         except KeyError:
                             pass
+                    # Index the document into Elasticsearch
+            number_of_files += 1
+
+def index_transcripts_with_metadata_from_folder(folder_path, index_name, metadata_file_path, episode_index_name, show_index_name):
+    metadata_df = pd.read_csv(metadata_file_path, delimiter='\t', dtype="string")
+
+    number_of_files = 0
+    actions = []
+
+    for root, dirs, files in os.walk(folder_path):
+        for file_name in files:
+            if number_of_files % 100 == 1:
+                print(f"{number_of_files} files indexed.")
+            if file_name.endswith('.json'):
+                file_path = os.path.join(root, file_name)
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    document = json.load(file)
+                    alternatives = document["results"]
+
+                    current_id = 0
+
+                    episode_filename = os.path.splitext(file_name)[0]
+                    episode_row = metadata_df[metadata_df['episode_filename_prefix'] == episode_filename]
+
+                    for alt in alternatives:
+                        try:
+                            transcript = alt["alternatives"][0]["transcript"]
+                            starttime = alt["alternatives"][0]["words"][0]["startTime"]
+                            endtime = alt["alternatives"][0]["words"][-1]["endTime"]
+
+                            contents = {
+                                "_id": episode_filename + "_" + str(current_id),
+                                "transcript": transcript,
+                                "starttime": starttime,
+                                "endtime": endtime
+                            }
+                            current_id += 1
+                            actions.append(contents)
+
+                            if(len(actions) >= 1000):
+                                helpers.bulk(client, actions, index=index_name)
+                                actions = []
+
+                            #client.index(index=index_name, body=contents)
+                            
+                        except KeyError:
+                            pass
+                    
+                    episode = {
+                        "episode_name": episode_row["episode_name"].item(),
+                        "episode_description": episode_row["episode_description"].item()
+                    }
+
+                    show = {
+                        "show_name": episode_row["show_name"].item(),
+                        "show_description": episode_row["show_description"].item(),
+                        "publisher": episode_row["publisher"].item()
+                    }
+
+                    #TODO: change to bulk
+                    client.index(index=episode_index_name, body=episode)
+
+                    #duplicates?
+                    client.index(index=show_index_name, body=show)
+
                     # Index the document into Elasticsearch
             number_of_files += 1
 
@@ -136,4 +202,4 @@ def get_tokens(text):
 
 
 # Initialize Elasticsearch client
-client = Elasticsearch(ADDRESS, api_key=API_KEY)
+client = Elasticsearch(ADDRESS, api_key=API_KEY, verify_certs=False, ssl_show_warn=False)
