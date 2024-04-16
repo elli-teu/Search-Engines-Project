@@ -472,7 +472,8 @@ class Box(GameObject):
 
     def __init__(self, x=0, y=0, z=0, width=100, height=100, color=WHITE, alpha=255, source_image_id=None, text="",
                  text_offset=standard_text_offset, text_color=BLACK, font_size=40, resize_to_fit_text=False,
-                 update_text_func=None, text_centering=(CenteringOptions.CENTER, CenteringOptions.CENTER), text_wrap=False,
+                 update_text_func=None, text_centering=(CenteringOptions.CENTER, CenteringOptions.CENTER),
+                 text_wrap=False,
                  x_centering=CenteringOptions.LEFT, y_centering=CenteringOptions.TOP, parent=None,
                  static=True, opaque=True,
                  include_border=False, name=None):
