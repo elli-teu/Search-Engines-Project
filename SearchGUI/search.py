@@ -101,6 +101,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                             "link": link
                         }
                         actions_shows.append(show)
+                        prev_showname = episode_row["show_name"].item()
 
                     #Index transcripts
                     for alt in alternatives:
