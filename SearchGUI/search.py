@@ -58,7 +58,7 @@ def generate_query(query_string, query_type):
         must_not_occur_tokens = get_tokens(" ".join(must_not_occur_words))
         must_not_occur_list = [{"term": {"transcript": token}} for token in must_not_occur_tokens]
 
-        phrases = re.findall('"([^"]*)"', query_string)
+        phrases = re.findall("""["']([^"]*)["']""", query_string)
         phases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
         must_occur_list.extend(phases_list)
 
