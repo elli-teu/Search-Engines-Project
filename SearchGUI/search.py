@@ -2,12 +2,14 @@ import json
 from elasticsearch import Elasticsearch
 import os
 from setup import ADDRESS, API_KEY, INDEX
+import re
 
 
 class QueryType:
     union_query = "union"
     intersection_query = "intersection"
     phrase_query = "phrase"
+    smart_query = "smart"
 
 
 def index_documents_from_folder(folder_path, index_name):
@@ -45,7 +47,35 @@ def index_transcripts_from_folder(folder_path, index_name):
 
 
 def generate_query(query_string, query_type):
-    if query_type == QueryType.union_query:
+    if query_type == QueryType.smart_query:
+        words = query_string.split(" ")
+        words = [x for x in words if len(x) != 0]
+        must_occur_words = [x[1:] for x in words if x[0] == "+"]
+        must_occur_tokens = get_tokens(" ".join(must_occur_words))
+        must_occur_list = [{"term": {"transcript": token}} for token in must_occur_tokens]
+
+        must_not_occur_words = [x[1:] for x in words if x[0] == "-"]
+        must_not_occur_tokens = get_tokens(" ".join(must_not_occur_words))
+        must_not_occur_list = [{"term": {"transcript": token}} for token in must_not_occur_tokens]
+
+        phrases = re.findall('"([^"]*)"', query_string)
+        phases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
+        must_occur_list.extend(phases_list)
+
+        should_occur_words = [x for x in words if x not in must_occur_words and x not in must_not_occur_words and x not in " ".join(phrases)]
+        should_occur_tokens = get_tokens(" ".join(should_occur_words))
+        should_occur_list = [{"term": {"transcript": token}} for token in should_occur_tokens]
+
+        query = {
+            "query": {
+                "bool": {
+                    "must": must_occur_list,
+                    "must_not": must_not_occur_list,
+                    "should": should_occur_list
+                }
+            }
+        }
+    elif query_type == QueryType.union_query:
         query = {
             "query": {
                 "match": {"transcript": query_string}

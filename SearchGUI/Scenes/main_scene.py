@@ -16,9 +16,10 @@ class MainScene(Scene):
 
     def __init__(self):
         super().__init__(name=scenes.MAIN_SCENE)
-        self.selected_query_type = search.QueryType.intersection_query
+        self.selected_query_type = search.QueryType.smart_query
         self.search_results = []
         self.start_index = 0
+        self.result_buttons = []
 
     def create_scene(self):
         """Creates the main menu scene.
@@ -32,13 +33,19 @@ class MainScene(Scene):
                                        height=30, width=500)
         search_box.return_key_function = search_from_box
         search_box.return_key_args = [search_box]
+
         search_button = assets.Button(search_box.x + search_box.width + standard_space,
                                       y=110, height=0, width=110, resize_to_fit_text=True, text="Search",
                                       font_size=font_size,
                                       left_click_function=search_from_box, left_click_args=[search_box],
                                       name="search_button")
+        smart_search_button = assets.Button(search_box.x,
+                                            y=30, height=0, resize_to_fit_text=True, text="Smart Search", font_size=20,
+                                            left_click_function=set_query_type,
+                                            left_click_args=[search.QueryType.smart_query],
+                                            name="smart_button", color=BLUE)
 
-        union_button = assets.Button(search_box.x,
+        union_button = assets.Button(search_box.x + smart_search_button.width + standard_space,
                                      y=30, height=0, resize_to_fit_text=True, text="Union Search", font_size=20,
                                      left_click_function=set_query_type, left_click_args=[search.QueryType.union_query],
                                      name="union_button")
@@ -47,7 +54,8 @@ class MainScene(Scene):
                                             font_size=20,
                                             left_click_function=set_query_type,
                                             left_click_args=[search.QueryType.intersection_query],
-                                            name="intersection_button", color=BLUE)
+                                            name="intersection_button")
+
         phrase_button = assets.Button(intersection_button.x + intersection_button.width + standard_space,
                                       y=30, height=0, resize_to_fit_text=True, text="Phrase Search", font_size=20,
                                       left_click_function=set_query_type,
@@ -78,7 +86,7 @@ class MainScene(Scene):
         self.add_object(number_box)
 
         objects = [search_box, search_button,
-                   union_button, intersection_button, phrase_button,
+                   smart_search_button, union_button, intersection_button, phrase_button,
                    scroll_up_button, scroll_down_button, scroll_button]
         self.add_multiple_objects(objects)
 
@@ -86,13 +94,12 @@ class MainScene(Scene):
 
 
 def set_query_type(query_type):
-    union_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
-                                               "union_button")
-    intersection_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
-                                                      "intersection_button")
-    phrase_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
-                                                "phrase_button")
-    buttons = [union_button, intersection_button, phrase_button]
+    query_types = [search.QueryType.smart_query, search.QueryType.union_query, search.QueryType.intersection_query,
+                   search.QueryType.phrase_query]
+
+    buttons = [x for x in game_engine.get_scene_manager().get_current_scene().get_objects() if x.name is not None
+               and x.name.split("_")[0] in query_types]
+
     for button in buttons:
         if query_type in button.name:
             button.set_color(BLUE)
@@ -107,19 +114,15 @@ def update_result_buttons_relative(change_in_index):
 
 
 def update_result_buttons(start_index):
-    result_buttons = []
     scene = game_engine.get_scene_manager().get_current_scene()
-    for obj in scene.get_objects():
-        if obj.name is not None and "result" in obj.name and "_button" in obj.name and not obj.destroyed:
-            result_buttons.append(obj)
 
-    if start_index + len(result_buttons) > len(scene.search_results):
-        start_index = len(scene.search_results) - len(result_buttons)
+    if start_index + len(scene.result_buttons) > len(scene.search_results):
+        start_index = len(scene.search_results) - len(scene.result_buttons)
     if start_index < 0:
         start_index = 0
     scene.start_index = start_index
 
-    for i, button in enumerate(result_buttons):
+    for i, button in enumerate(scene.result_buttons):
         button_text = scene.search_results[start_index + i].lstrip(" ")
         button.set_text(button_text)
 
@@ -159,6 +162,7 @@ def create_result_buttons(results):
     number_of_shown_results = 10
     start_height = 250
     y = start_height
+    result_buttons = []
     for i, result in enumerate(results[:number_of_shown_results]):
         result_button = assets.Button(x=environment.get_width() / 2 - 400, y=y, width=800, height=50, color=LIGHT_GREY,
                                       font_size=15,
@@ -167,6 +171,9 @@ def create_result_buttons(results):
                                       left_click_function=create_result_overlay, left_click_args=[i])
         y += result_button.height + standard_space
         current_scene.add_object(result_button)
+        result_buttons.append(result_button)
+
+    current_scene.result_buttons = result_buttons
 
 
 def create_result_overlay(button_index):
@@ -191,6 +198,7 @@ class ScrollButton(assets.MobileButton):
         start_value (float): The smaller endpoint of where the button should stop
         stop_value (float): The larger endpoint.
     """
+
     def __init__(self, x=0, y=0, z=1, width=200, height=120, color=(100, 100, 100), indicator_color=WHITE,
                  indicate_hover=False,
                  indicate_clicks=False, alpha=255, static=False,
@@ -282,7 +290,7 @@ class ScrollButton(assets.MobileButton):
             raise ValueError(f"{self.fixed_axis} is not a valid axis.")
         current_scene = game_engine.get_scene_manager().get_current_scene()
         search_results = current_scene.search_results
-        update_result_buttons(int(fraction_scrolled * len(search_results)))
+        update_result_buttons(int(fraction_scrolled * (len(search_results) - len(current_scene.result_buttons))))
 
     def update_click_position(self):
         """Updates the click position of the MobileButton."""
@@ -301,4 +309,3 @@ class ScrollButton(assets.MobileButton):
         if self.start_value <= value <= self.stop_value:
             return True
         return False
-

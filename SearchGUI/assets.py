@@ -465,7 +465,6 @@ class Box(GameObject):
         font_size (int): The font size of the text.
         text_centering (string, string): The text centering mode. The first item corresponds to the horizontal
             placement, and the second the vertical placement.
-        text_surface_id (int): The id corresponding to the font surface of the box.
         update_text_func (callable): The function responsible for updating the box text.
         surface_id (int): The id corresponding to the surface of the box.
     """
@@ -520,7 +519,6 @@ class Box(GameObject):
         self.text_wrap = text_wrap
         self.text_lines = []
 
-        self.text_surface_id = None
         if resize_to_fit_text and self.text != "":
             self.resize_to_fit_text()
 
@@ -578,6 +576,7 @@ class Box(GameObject):
          """
         self.source_image_id = new_source_image_id
         self.update_image()
+        # TODO: Change update_image to setting changed_recently to true?
 
     def set_text(self, new_text):
         """Sets the text of the Box and updates the font surface id.
@@ -586,14 +585,11 @@ class Box(GameObject):
             new_text (str): The new text for the Box.
         """
         self.text = new_text
-        self.update_text_surface()
+        self.changed_recently = True
 
     def update_text_surface(self):
         """Updates the text surface of the box and truncates its text to fit the box."""
         self.truncate_text()
-        self.text_surface_id = game_engine.get_surface_manager().create_font_surface(self.text, self.text_color,
-                                                                                     self.font_size,
-                                                                                     self.text_surface_id)
 
     def truncate_text(self):
         """Truncates the text of the box in order to fit the box."""
@@ -640,11 +636,8 @@ class Box(GameObject):
         Returns:
             int: The calculated height.
         """
-        height = 0
         font = game_engine.get_surface_manager().get_font(self.font_size)
-        for line in self.text_lines:
-            height += pygame.font.Font.size(font, line)[1]
-        return height
+        return pygame.font.Font.size(font, "Test line")[1] * len(self.text_lines)
 
     def truncate_text_line(self, text, final_line=False):
         """Truncates the supplied text line in order to fit the box in terms of its width.
@@ -748,7 +741,7 @@ class Box(GameObject):
         if self.source_image_id is not None:
             self.update_image()
 
-        if self.text_surface_id is not None:
+        if self.text != "":
             self.update_text_surface()
 
         game_engine.get_surface_manager().transform_surface(self.surface_id, (self.width, self.height),
@@ -1403,7 +1396,8 @@ class MobileButton(Button):
                  indicate_hover=True,
                  indicate_clicks=False, alpha=255, static=False,
                  source_image_id=None, text="", font_size=40,
-                 text_color=BLACK, text_centering=(CenteringOptions.CENTER, CenteringOptions.CENTER), x_centering=CenteringOptions.LEFT,
+                 text_color=BLACK, text_centering=(CenteringOptions.CENTER, CenteringOptions.CENTER),
+                 x_centering=CenteringOptions.LEFT,
                  y_centering=CenteringOptions.TOP,
                  include_border=True, name=None, parent=None,
                  left_trigger_keys=None, left_hold_function=None,
@@ -1537,7 +1531,8 @@ class InputField(Button):
 
     def __init__(self, x=0, y=0, z=1, width=200, height=120, color=GREY, indicate_hover=False, indicate_clicks=True,
                  alpha=255, text="", font_size=20, text_color=BLACK, initial_text_buffer="",
-                 allowed_input_type=InputTypes.ANY, text_centering=(CenteringOptions.LEFT, CenteringOptions.CENTER), text_wrap=False,
+                 allowed_input_type=InputTypes.ANY, text_centering=(CenteringOptions.LEFT, CenteringOptions.CENTER),
+                 text_wrap=False,
                  name=None, include_border=True, static=False, return_key_function=None, return_key_args=None):
         """Initializes an InputField object.
 
@@ -1561,7 +1556,7 @@ class InputField(Button):
             name (str): The name of the InputField (default is None).
             include_border (bool): Determines if the button should have a border or not.
             static (bool): Indicates whether the InputField is static (does not move together with its parent).
-            return_key_function (callable): The function to be executed when return is pressed and input field is selected.
+            return_key_function (callable): The function to be executed when the return key is pressed.
             return_key_args (iterable): The arguments for the return key function.
         """
         super().__init__(x=x, y=y, z=z, width=width, height=height, color=color,
