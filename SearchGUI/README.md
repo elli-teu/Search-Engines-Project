@@ -2,7 +2,7 @@
 
 För att sökmotorn ska fungera på din dator:
 1. Öppna filen `setup.py` och ändra adressen och API-nyckeln till dina värden.
-2. Se till att ha podcast-filerna i en mapp som heter `dataset`, eller döp om konstanten `DATASET_FOLDER` till vad din mapp heter.
+2. Se till att ha podcast-filerna i en mapp som heter `dataset`, som ligger på samma nivå som SearchGUI mappen, eller döp om konstanten `DATASET_FOLDER` till vad din mapp heter.
 3. Starta elasticsearch, och när den har startat, kör filen `index_dataset.py` för att skapa en index `podcast_transcripts` och börja indexera alla `.json` filer.
 4. Det går nu att starta sökmotorn genom att köra filen `main.py`.
 

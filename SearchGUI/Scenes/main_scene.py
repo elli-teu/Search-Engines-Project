@@ -28,6 +28,8 @@ class MainScene(Scene):
         font_size = 20
         search_box = assets.InputField(x=environment.get_width() / 2 - (500 + 110) / 2, y=110,
                                        height=30, width=500)
+        search_box.return_key_function = search_from_box
+        search_box.return_key_args = [search_box]
         search_button = assets.Button(search_box.x + search_box.width + standard_space,
                                       y=110, height=0, width=110, resize_to_fit_text=True, text="Search", font_size=font_size,
                                       left_click_function=search_from_box, left_click_args=[search_box],
@@ -55,7 +57,6 @@ class MainScene(Scene):
                                 name="number_box", include_border=True)
 
         self.add_object(number_box)
-
 
         objects = [search_box, search_button, union_button, intersection_button, phrase_button]
         self.add_multiple_objects(objects)

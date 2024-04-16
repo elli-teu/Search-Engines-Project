@@ -1527,12 +1527,14 @@ class InputField(Button):
         fixed_text (str): The part of the InputField text that cannot be changed by input.
         text_buffer (str): The part of the InputField text that can be changed by input.
         allowed_input_type (str): A string containing all allowed characters.
+        return_key_function (callable): The function to be executed when return is pressed and input field is selected.
+        return_key_args (iterable): The arguments for the return key function.
     """
 
     def __init__(self, x=0, y=0, z=1, width=200, height=120, color=GREY, indicate_hover=False, indicate_clicks=True,
                  alpha=255, text="", font_size=20, text_color=BLACK, initial_text_buffer="",
                  allowed_input_type=InputTypes.ANY, text_centering=(CenteringOptions.LEFT, CenteringOptions.CENTER), text_wrap=False,
-                 name=None, include_border=True, static=False):
+                 name=None, include_border=True, static=False, return_key_function=None, return_key_args=None):
         """Initializes an InputField object.
 
         Args:
@@ -1555,6 +1557,8 @@ class InputField(Button):
             name (str): The name of the InputField (default is None).
             include_border (bool): Determines if the button should have a border or not.
             static (bool): Indicates whether the InputField is static (does not move together with its parent).
+            return_key_function (callable): The function to be executed when return is pressed and input field is selected.
+            return_key_args (iterable): The arguments for the return key function.
         """
         super().__init__(x=x, y=y, z=z, width=width, height=height, color=color,
                          indicate_hover=indicate_hover,
@@ -1575,6 +1579,9 @@ class InputField(Button):
 
         self.backspace_counter = 0
         self.backspace_timer = 0
+
+        self.return_key_function = return_key_function
+        self.return_key_args = return_key_args
 
     def create_input_detector(self):
         """Creates a new InputDetector object."""
@@ -1638,6 +1645,10 @@ class InputField(Button):
             self.backspace(new_press=new_backspace_press)
             return
 
+        if Keys.RETURN in keys_pressed:
+            self.press_return()
+            return
+
     def backspace(self, new_press=False):
         """Handels the backspace key event."""
         if self.backspace_counter > 0:
@@ -1652,6 +1663,11 @@ class InputField(Button):
             self.backspace_counter = 8  # Hard-coded value.
         else:
             self.backspace_counter = 2  # Hard-coded value.
+
+    def press_return(self):
+        """Executes the return key function if set."""
+        if self.return_key_function is not None:
+            self.return_key_function(*self.return_key_args)
 
     def process(self):
         """Processes the InputField, updating its text if it is currently selected."""
@@ -1674,7 +1690,9 @@ class InputField(Button):
             tuple: The surface to be displayed and the object's rect.
         """
         if self.is_selected:
-            self.indicator_alpha = 10
+            self.set_color(LIGHT_GREY)
+        else:
+            self.set_color(GREY)
         return super().get_display_surface()
 
 

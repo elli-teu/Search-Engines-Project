@@ -24,3 +24,8 @@ hs_err_pid*
 replay_pid*
 
 dataset/
+
+__pycache__/
+*.pyc
+*.xml
+*.idea*
