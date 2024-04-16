@@ -74,8 +74,8 @@ def generate_query(query_string, query_type):
     return query
 
 
-def execute_query(query):
-    return client.search(index=INDEX, body=query)
+def execute_query(query, n=10):
+    return client.search(index=INDEX, body=query, size=n)
 
 
 def delete_index(index_name):

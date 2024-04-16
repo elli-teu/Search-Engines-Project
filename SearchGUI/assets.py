@@ -608,6 +608,9 @@ class Box(GameObject):
             height_one_line = pygame.font.Font.size(font, "testing")[1]
             final_line = occupied_height + height_one_line*2 >= allowed_height
             if occupied_height > allowed_height:
+                if len(self.text_lines) < 2:
+                    self.text_lines = [""]
+                    return
                 if self.text_lines[-2][-1] == "-" and self.text_lines[-1][0] != " ":
                     self.text_lines[-2] = self.text_lines[-2][:-1] + self.text_lines[-1][0]
                 self.text_lines = self.text_lines[:-1]
