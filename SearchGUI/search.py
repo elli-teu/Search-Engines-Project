@@ -3,7 +3,7 @@ from elasticsearch import Elasticsearch, helpers
 import os
 import pandas as pd
 from setup import ADDRESS, API_KEY, INDEX
-
+import xml.etree.ElementTree as ET
 
 class QueryType:
     union_query = "union"
@@ -44,13 +44,21 @@ def index_transcripts_from_folder(folder_path, index_name):
                     # Index the document into Elasticsearch
             number_of_files += 1
 
-def index_transcripts_with_metadata_from_folder(folder_path, index_name, metadata_file_path, episode_index_name, show_index_name):
+def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode_index_name, show_index_name):
+    transcript_file_path = os.path.join(folder_path, "podcasts-transcripts")
+    metadata_file_path = os.path.join(folder_path, "metadata.tsv")
+    rss_file_path = os.path.join(folder_path, "show-rss")
+    
     metadata_df = pd.read_csv(metadata_file_path, delimiter='\t', dtype="string")
 
     number_of_files = 0
     actions = []
+    actions_episodes = []
+    actions_shows = []
 
-    for root, dirs, files in os.walk(folder_path):
+    prev_showname = ""
+
+    for root, dirs, files in os.walk(transcript_file_path):
         for file_name in files:
             if number_of_files % 100 == 1:
                 print(f"{number_of_files} files indexed.")
@@ -62,9 +70,39 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, metadat
 
                     current_id = 0
 
+                    #Index episodes and shows
                     episode_filename = os.path.splitext(file_name)[0]
                     episode_row = metadata_df[metadata_df['episode_filename_prefix'] == episode_filename]
 
+                    episode = {
+                        "episode_name": episode_row["episode_name"].item(),
+                        "episode_description": episode_row["episode_description"].item()
+                    }
+                    actions_episodes.append(episode)
+
+                    #ugly but should work (get image and podcast link)
+                    #assuming "correct" directory names
+                    pathlist = file_path.split(os.path.sep)[:-1]
+                    pathlist[-4] = "show-rss"
+                    show_rss_path = os.path.sep.join(pathlist) + ".xml"
+
+                    tree = ET.parse(show_rss_path)
+                    xmlroot = tree.getroot()
+                    imageurl = xmlroot[0].find('.//image')[0].text
+                    link = xmlroot[0].find('.//link').text
+
+                    #avoid duplicates (possibly not needed)
+                    if(prev_showname != episode_row["show_name"].item()):
+                        show = {
+                            "show_name": episode_row["show_name"].item(),
+                            "show_description": episode_row["show_description"].item(),
+                            "publisher": episode_row["publisher"].item(),
+                            "image": imageurl,
+                            "link": link
+                        }
+                        actions_shows.append(show)
+
+                    #Index transcripts
                     for alt in alternatives:
                         try:
                             transcript = alt["alternatives"][0]["transcript"]
@@ -80,31 +118,18 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, metadat
                             current_id += 1
                             actions.append(contents)
 
+                            #Submit all together
                             if(len(actions) >= 1000):
                                 helpers.bulk(client, actions, index=index_name)
                                 actions = []
-
-                            #client.index(index=index_name, body=contents)
+                                helpers.bulk(client, actions_episodes, index=episode_index_name)
+                                actions_episodes = []
+                                helpers.bulk(client, actions_shows, index=show_index_name)
+                                actions_shows = []
                             
                         except KeyError:
                             pass
                     
-                    episode = {
-                        "episode_name": episode_row["episode_name"].item(),
-                        "episode_description": episode_row["episode_description"].item()
-                    }
-
-                    show = {
-                        "show_name": episode_row["show_name"].item(),
-                        "show_description": episode_row["show_description"].item(),
-                        "publisher": episode_row["publisher"].item()
-                    }
-
-                    #TODO: change to bulk
-                    client.index(index=episode_index_name, body=episode)
-
-                    #duplicates?
-                    client.index(index=show_index_name, body=show)
 
                     # Index the document into Elasticsearch
             number_of_files += 1
