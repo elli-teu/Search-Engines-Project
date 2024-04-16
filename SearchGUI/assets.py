@@ -1505,8 +1505,8 @@ class MobileButton(Button):
 
     def start_movement(self):
         """Starts the movement of the mobile button."""
-        self.moving = True
         self.update_click_position()
+        self.moving = True
 
     def update_click_position(self):
         """Updates the click position of the MobileButton."""
