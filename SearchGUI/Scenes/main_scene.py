@@ -1,3 +1,4 @@
+import pygame
 from game_engine import environment, Scene
 import game_engine as game_engine
 from constants import *
@@ -24,10 +25,10 @@ class MainScene(Scene):
         Returns:
             Scene: The main menu scene containing buttons for starting, loading, testing, and exiting the game.
         """
-        self.background_color = WHITE
+        self.background_color = LIGHT_GREY
         font_size = 20
         search_box = assets.InputField(x=environment.get_width() / 2 - (500 + 110) / 2, y=110,
-                                       height=30, width=500)
+                                       height=30, width=500, color=WHITE)
         search_button = assets.Button(search_box.x + search_box.width + standard_space,
                                       y=110, height=0, width=110, resize_to_fit_text=True, text="Search", font_size=font_size,
                                       left_click_function=search_from_box, left_click_args=[search_box],
@@ -42,7 +43,7 @@ class MainScene(Scene):
                                             font_size=20,
                                             left_click_function=set_query_type,
                                             left_click_args=[search.QueryType.intersection_query],
-                                            name="intersection_button", color=BLUE)
+                                            name="intersection_button", color="#35BAFC")
         phrase_button = assets.Button(intersection_button.x + intersection_button.width + standard_space,
                                       y=30, height=0, resize_to_fit_text=True, text="Phrase Search", font_size=20,
                                       left_click_function=set_query_type,
@@ -53,20 +54,38 @@ class MainScene(Scene):
                               left_click_function=set_query_type,
                               left_click_args=[search.QueryType.vector_query],
                               name="vector_button")
+        combi_button = assets.Button(vector_button.x + vector_button.width + standard_space,
+                              y=30, height=0, resize_to_fit_text=True, text="Combi Search", font_size=20,
+                              left_click_function=set_query_type,
+                              left_click_args=[search.QueryType.combi_query],
+                              name="combi_button")
 
-        number_box = assets.Box(x=environment.get_width() / 2 - 194 / 2, y=150, height=30, width=194, color=GREY,
+        number_box = assets.Box(x=environment.get_width() / 2 - 194 / 2, y=150, height=30, width=194, color="#EBC1FF",
                                 text=f"Number of results:", font_size=15, text_offset=5,
                                 text_centering=(assets.CenteringOptions.LEFT, assets.CenteringOptions.CENTER),
                                 name="number_box", include_border=True)
 
         self.add_object(number_box)
+        #search_box.add_event_listener(pygame.KEYDOWN, handle_keypress)
+        # Add the event listener to the search box
+        #search_box.add_event_listener(pygame.KEYDOWN, handle_keypress)
 
-
-        objects = [search_box, search_button, union_button, intersection_button, phrase_button, vector_button]
+        objects = [search_box, search_button, union_button, intersection_button, phrase_button, vector_button, combi_button]
         self.add_multiple_objects(objects)
+        
 
         return self
+    
+def handle_keypress(event):
+    """Handle the key press event.
 
+    Args:
+        event (pygame.Event): The pygame event object.
+    """
+    if event.key == pygame.K_RETURN:
+        # Execute search when Enter key is pressed
+        search_box = event.ui_object
+        search_from_box(search_box)
 
 def set_query_type(query_type):
     union_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
@@ -77,12 +96,14 @@ def set_query_type(query_type):
                                                 "phrase_button")
     vector_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
                                                 "vector_button")
-    buttons = [union_button, intersection_button, phrase_button, vector_button]
+    combi_button = utils.find_object_from_name(game_engine.get_scene_manager().get_current_scene().get_objects(),
+                                                "combi_button")
+    buttons = [union_button, intersection_button, phrase_button, vector_button, combi_button]
     for button in buttons:
         if query_type in button.name:
-            button.set_color(BLUE)
+            button.set_color("#35BAFC")
         else:
-            button.set_color(GREY)
+            button.set_color("#E1F5FF")
     game_engine.get_scene_manager().get_current_scene().selected_query_type = query_type
 
 
@@ -106,7 +127,7 @@ def search_from_box(input_box):
     start_height = 250
     y = start_height
     for i, result in enumerate(results):
-        result_box = assets.Box(x=environment.get_width() / 2 - 400, y=y, width=800, color=LIGHT_GREY, text=result, font_size=15,
+        result_box = assets.Box(x=environment.get_width() / 2 - 400, y=y, width=800, color=WHITE, text=result, font_size=15,
                                 text_centering=(assets.CenteringOptions.LEFT, assets.CenteringOptions.TOP),
                                 text_wrap=True, name=f"result{i}_box", include_border=True)
         result_box.set_height(2 * result_box.text_offset + result_box.get_text_height())

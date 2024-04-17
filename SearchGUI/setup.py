@@ -1,6 +1,6 @@
 ADDRESS = "https://localhost:9200"
 #API_KEY = "VjdHRnBJNEJCX1ZpajJxeXp6RXQ6cjhfTzdFb2FUcnVNTVVwalYxLUNJdw=="
-INDEX = "test"
+INDEX = "testingtesting1"
 DATASET_FOLDER = "C:\\Users\\ELLI\\Documents\\Programmering\\dataset\\test"
 # Path to the CA certificate file
 CA_CERT = '"C:\\Users\\ELLI\\http_ca.crt"'
