@@ -70,13 +70,15 @@ class MainScene(Scene):
         scroll_up_button = assets.Button(x=environment.get_width() / 2 + 400 + standard_space, y=250, width=40,
                                          height=40,
                                          source_image_id=file_op.load_image(image_location + "up_arrow.png"),
-                                         left_click_function=update_result_buttons_relative, left_click_args=[-1])
+                                         left_click_function=update_result_buttons_relative, left_click_args=[-1],
+                                         name="scroll_up_button")
         scroll_down_button = assets.Button(x=environment.get_width() / 2 + 400 + standard_space, y=800, width=40,
                                            height=40,
                                            source_image_id=file_op.load_image(image_location + "down_arrow.png"),
-                                           left_click_function=update_result_buttons_relative, left_click_args=[1])
+                                           left_click_function=update_result_buttons_relative, left_click_args=[1],
+                                           name="scroll_down_button")
         scroll_button_y = 290
-        scroll_button_height = 100
+        scroll_button_height = scroll_down_button.y - scroll_up_button.y - scroll_up_button.height
         scroll_button = ScrollButton(x=environment.get_width() / 2 + 400 + standard_space,
                                      y=scroll_button_y,
                                      width=40, height=scroll_button_height,
@@ -121,9 +123,9 @@ def update_result_buttons(start_index):
     if start_index < 0:
         start_index = 0
     scene.start_index = start_index
-
     for i, button in enumerate(scene.result_buttons):
         button_text = scene.search_results[start_index + i].lstrip(" ")
+        button_text = " ".join(button_text.split(" ")[:10]) + "... - [Click to show more]"
         button.set_text(button_text)
 
 
@@ -144,6 +146,16 @@ def search_from_box(input_box):
     results = search.get_first_n_results(response, n=1000)
     current_scene.search_results = results
     create_result_buttons(results)
+    scroll_button = utils.find_object_from_name(current_scene.get_objects(), "scroll_button")
+    scroll_up_button = utils.find_object_from_name(current_scene.get_objects(), "scroll_up_button")
+    scroll_down_button = utils.find_object_from_name(current_scene.get_objects(), "scroll_down_button")
+    max_height = scroll_down_button.y - scroll_up_button.y - scroll_up_button.height
+    if len(results) == 0:
+        scroll_button_height = max_height
+    else:
+        scroll_button_height = max(max_height * len(current_scene.result_buttons) / len(results), 20)
+    scroll_button.set_height(scroll_button_height)
+    scroll_button.set_y(scroll_up_button.y + scroll_up_button.height)
 
     update_result_buttons(0)
     number_box = utils.find_object_from_name(current_scene.get_objects(), "number_box")
@@ -277,17 +289,22 @@ class ScrollButton(assets.MobileButton):
             return
         mouse_position = environment.get_mouse_position()
         if self.fixed_axis == "vertical":
-            new_y = mouse_position[1] - self.click_y
-            new_y = utils.clamp(new_y, self.start_value, self.stop_value - self.height)
-            self.set_y(new_y)
-            fraction_scrolled = (new_y - self.start_value) / (self.stop_value - self.start_value - self.height)
+            scroll_length = mouse_position[1] - self.click_y
+            scroll_length = utils.clamp(scroll_length, self.start_value, self.stop_value - self.height)
+            self.set_y(scroll_length)
         elif self.fixed_axis == "horizontal":
-            new_x = mouse_position[0] - self.click_x
-            new_x = utils.clamp(new_x, self.start_value, self.stop_value - self.width)
-            self.set_x(new_x)
-            fraction_scrolled = (new_x - self.start_value) / (self.stop_value - self.start_value)
+            scroll_length = mouse_position[0] - self.click_x
+            scroll_length = utils.clamp(scroll_length, self.start_value, self.stop_value - self.width)
+            self.set_x(scroll_length)
         else:
             raise ValueError(f"{self.fixed_axis} is not a valid axis.")
+
+        total_scroll_length = (self.stop_value - self.start_value - self.height)
+        if total_scroll_length == 0:
+            fraction_scrolled = 0
+        else:
+            fraction_scrolled = (scroll_length - self.start_value) / total_scroll_length
+
         current_scene = game_engine.get_scene_manager().get_current_scene()
         search_results = current_scene.search_results
         update_result_buttons(int(fraction_scrolled * (len(search_results) - len(current_scene.result_buttons))))
