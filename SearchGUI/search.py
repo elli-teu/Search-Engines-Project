@@ -148,8 +148,8 @@ def print_first_n_results(response, n=10):
 def get_first_n_results(response, n=10):
     results = []
     for hit in response['hits']['hits'][:n]:
-        transcript = hit['_source']["transcript"]
-        results.append(transcript)
+        result = hit['_source']
+        results.append(result)
     return results
 
 
@@ -166,4 +166,4 @@ def get_tokens(text):
 
 
 # Initialize Elasticsearch client
-client = Elasticsearch(ADDRESS, api_key=API_KEY)
+client = Elasticsearch(ADDRESS, api_key=API_KEY, verify_certs=False)

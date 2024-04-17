@@ -124,7 +124,7 @@ def update_result_buttons(start_index):
         start_index = 0
     scene.start_index = start_index
     for i, button in enumerate(scene.result_buttons):
-        button_text = scene.search_results[start_index + i].lstrip(" ")
+        button_text = scene.search_results[start_index + i]["transcript"].lstrip(" ")
         button_text = " ".join(button_text.split(" ")[:10]) + "... - [Click to show more]"
         button.set_text(button_text)
 
@@ -145,7 +145,7 @@ def search_from_box(input_box):
 
     results = search.get_first_n_results(response, n=1000)
     current_scene.search_results = results
-    create_result_buttons(results)
+    create_result_buttons(len(results))
     scroll_button = utils.find_object_from_name(current_scene.get_objects(), "scroll_button")
     scroll_up_button = utils.find_object_from_name(current_scene.get_objects(), "scroll_up_button")
     scroll_down_button = utils.find_object_from_name(current_scene.get_objects(), "scroll_down_button")
@@ -167,15 +167,16 @@ def clear_old_buttons():
     for obj in current_scene.get_objects():
         if obj.name is not None and "result" in obj.name and "_button" in obj.name:
             obj.destroy()
+    current_scene.result_buttons = []
 
 
-def create_result_buttons(results):
+def create_result_buttons(number_of_results):
     current_scene = game_engine.get_scene_manager().get_current_scene()
-    number_of_shown_results = 10
+    number_of_shown_results = min(10, number_of_results)
     start_height = 250
     y = start_height
     result_buttons = []
-    for i, result in enumerate(results[:number_of_shown_results]):
+    for i in range(number_of_shown_results):
         result_button = assets.Button(x=environment.get_width() / 2 - 400, y=y, width=800, height=50, color=LIGHT_GREY,
                                       font_size=15,
                                       text_centering=(assets.CenteringOptions.LEFT, assets.CenteringOptions.CENTER),
@@ -190,14 +191,53 @@ def create_result_buttons(results):
 
 def create_result_overlay(button_index):
     current_scene = game_engine.get_scene_manager().get_current_scene()
-    result_overlay = assets.Overlay(x=standard_space, z=1, width=450, height=400)
+    relevant_result = current_scene.search_results[current_scene.start_index + button_index]
+    podcast_title = "Podcast title"  # relevant_result["podcast_title"]
+    episode_title = "Episode title"  # relevant_result["episode_title"]
+    author = "Author"  # relevant_result["author"]
+    podcast_image = file_op.load_image(image_location+"placeholder.jpg")
+    transcript = relevant_result["transcript"].lstrip(" ")
+
+    result_overlay = assets.Overlay(x=standard_space, z=1, width=450, height=800)
     result_overlay.external_process_function = utils.destroy_on_external_clicks
     result_overlay.external_process_arguments = [result_overlay, [result_overlay.get_rect()]]
-    result_text_box = result_overlay.get_box()
-    result_text_box.font_size = 20
-    result_text_box.text_wrap = True
-    result_text_box.text_centering = (assets.CenteringOptions.LEFT, assets.CenteringOptions.CENTER)
-    result_text_box.set_text(current_scene.search_results[current_scene.start_index + button_index].lstrip(" "))
+
+    podcast_title_box = assets.Box(x=result_overlay.x + standard_space, y=result_overlay.y + standard_space, z=1,
+                                   width=result_overlay.width - 2 * standard_space, height=0, resize_to_fit_text=True,
+                                   font_size=40,
+                                   text=podcast_title, text_offset=0)
+    result_overlay.add_child(podcast_title_box)
+
+    episode_title_box = assets.Box(x=result_overlay.x + standard_space,
+                                   y=podcast_title_box.y + podcast_title_box.height + standard_space, z=1,
+                                   width=result_overlay.width - 2 * standard_space, height=0, resize_to_fit_text=True,
+                                   font_size=27,
+                                   text=episode_title, text_offset=0)
+    result_overlay.add_child(episode_title_box)
+
+    snippet_author_box = assets.Box(x=result_overlay.x + standard_space,
+                                    y=episode_title_box.y + episode_title_box.height + standard_space, z=1,
+                                    width=result_overlay.width - 2 * standard_space, height=0, resize_to_fit_text=True,
+                                    font_size=22,
+                                    text=author, text_offset=0)
+    result_overlay.add_child(snippet_author_box)
+    image_width = 192
+    image_height = 108
+    podcast_image_box = assets.Box(x=result_overlay.x + result_overlay.width/2 - image_width / 2,
+                                   y=snippet_author_box.y + snippet_author_box.height + standard_space, z=1,
+                                   width=image_width, height=image_height,
+                                   source_image_id=podcast_image)
+    result_overlay.add_child(podcast_image_box)
+
+    result_text_box = assets.Box(x=result_overlay.x + standard_space,
+                                 y=result_overlay.y + result_overlay.height / 2 + standard_space, z=1,
+                                 width=result_overlay.width - 2 * standard_space,
+                                 height=result_overlay.height / 2 - 2 * standard_space, font_size=20,
+                                 text_wrap=True,
+                                 text_centering=(assets.CenteringOptions.LEFT, assets.CenteringOptions.CENTER),
+                                 text=transcript,
+                                 include_border=True)
+    result_overlay.add_child(result_text_box)
     current_scene.add_object(result_overlay)
 
 

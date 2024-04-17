@@ -1752,7 +1752,7 @@ class Overlay(GameObject):
             self.close_button_size = close_button_size
             self.close_button_offset = close_button_offset
             close_button = Button(x=self.x + self.width - close_button_size - close_button_offset,
-                                  y=self.y + close_button_offset, z=self.z, width=close_button_size,
+                                  y=self.y + close_button_offset, z=self.z+0.1, width=close_button_size,
                                   height=close_button_size,
                                   source_image_id=file_op.load_image("Images/close_button.png"), font_size=15,
                                   parent=self,
