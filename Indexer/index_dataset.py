@@ -20,7 +20,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
     rss_file_path = os.path.join(folder_path, "show-rss")
     
     metadata_df = pd.read_csv(metadata_file_path, delimiter='\t', dtype="string")
-
+    
     actions = []
     actions_episodes = []
     actions_shows = []
@@ -44,7 +44,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                     tqdm_bar.update(1)
 
                     if file_name.endswith('.json'):
-                        files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes]))
+                        files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes], index_name, show_index_name))
 
                         if len(files_to_pool) == num_processes*10:
                             new_actions = pool.starmap(index_file, files_to_pool)
@@ -96,7 +96,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
             pass
 
 
-def index_file(root, file_name, metadata_df, model):
+def index_file(root, file_name, metadata_df, model, index_name, show_index_name):
     actions = []
     actions_episodes = []
     actions_shows = []
@@ -133,25 +133,31 @@ def index_file(root, file_name, metadata_df, model):
         showID = episode_row["show_filename_prefix"].item()
 
         #avoid duplicates (possibly not needed)
-        #if(prev_showname != showID):
-        show = {
-            "_id": showID,
-            "show_name": episode_row["show_name"].item(),
-            "show_description": episode_row["show_description"].item(),
-            "publisher": episode_row["publisher"].item(),
-            "image": imageurl,
-            "link": link
-        }
-        actions_shows.append(show)
-            #prev_showname = episode_row["show_filename_prefix"].item()
+        if (not client.exists(index=show_index_name, id=showID).body):
+            show = {
+                "_id": showID,
+                "show_name": episode_row["show_name"].item(),
+                "show_description": episode_row["show_description"].item(),
+                "publisher": episode_row["publisher"].item(),
+                "image": imageurl,
+                "link": link
+            }
+            actions_shows.append(show)
 
         #Index transcripts
         for alt in alternatives:
             try:
+                if (client.exists(index=index_name, id=episode_filename + "_" + str(current_id)).body):
+                    continue
+
                 transcript = alt["alternatives"][0]["transcript"]
                 starttime = alt["alternatives"][0]["words"][0]["startTime"]
                 endtime = alt["alternatives"][0]["words"][-1]["endTime"]
                 confidence = alt["alternatives"][0]["confidence"]
+
+                if (transcript == "" or transcript == None):
+                    continue
+
                 vector = model.encode(transcript)
 
                 contents = {
@@ -168,6 +174,9 @@ def index_file(root, file_name, metadata_df, model):
                 
             except KeyError:
                 pass
+            except NotImplementedError as e:
+                print(e)
+                exit(1)
 
     return (actions, actions_episodes, actions_shows)
 
