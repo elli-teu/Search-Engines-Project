@@ -112,12 +112,14 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                             transcript = alt["alternatives"][0]["transcript"]
                             starttime = alt["alternatives"][0]["words"][0]["startTime"]
                             endtime = alt["alternatives"][0]["words"][-1]["endTime"]
+                            confidence = alt["alternatives"][0]["confidence"]
 
                             contents = {
                                 "_id": episode_filename + "_" + str(current_id),
                                 "transcript": transcript,
                                 "starttime": starttime,
-                                "endtime": endtime
+                                "endtime": endtime,
+                                "confidence": confidence
                             }
                             current_id += 1
                             actions.append(contents)
@@ -137,7 +139,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
 
                     # Index the document into Elasticsearch
             number_of_files += 1
-            
+
     if (len(actions) != 0):
         try:
             helpers.bulk(client, actions, index=index_name)
