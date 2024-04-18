@@ -38,34 +38,38 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
 
     file_count = sum(len(files) for _, _, files in os.walk(transcript_file_path)) # Inefficient but only once so ok
     with tqdm(total=file_count, desc="Indexing files") as tqdm_bar:
-        for root, dirs, files in os.walk(transcript_file_path):
-            for file_name in files:
-                tqdm_bar.update(1)
+        with tqdm(total=num_actions_cached*2, desc="Actions in buffer") as tqdm_buffer_bar:
+            for root, dirs, files in os.walk(transcript_file_path):
+                for file_name in files:
+                    tqdm_bar.update(1)
 
-                if file_name.endswith('.json'):
-                    files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes]))
+                    if file_name.endswith('.json'):
+                        files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes]))
 
-                    if len(files_to_pool) == num_processes*10:
-                        new_actions = pool.starmap(index_file, files_to_pool)
-                        
-                        files_to_pool = []
-                        for a in new_actions:
-                            actions.append(a[0])
-                            actions_episodes.append(a[1])
-                            actions_shows.append(a[2])
+                        if len(files_to_pool) == num_processes*10:
+                            new_actions = pool.starmap(index_file, files_to_pool)
+                            
+                            files_to_pool = []
+                            for a in new_actions:
+                                tqdm_buffer_bar.update(len(a[0]))
+                                actions.extend(a[0])
+                                actions_episodes.extend(a[1])
+                                actions_shows.extend(a[2])
 
-                    #Submit all together
-                    if (len(actions) >= num_actions_cached):
-                        tqdm_bar.write(f"Sending to server! {len(actions)} actions")
-                        r1 = helpers.bulk(client, actions, index=index_name, stats_only=True)
-                        actions = []
-                        r2 = helpers.bulk(client, actions_episodes, index=episode_index_name, stats_only=True)
-                        actions_episodes = []
-                        r3 = helpers.bulk(client, actions_shows, index=show_index_name, stats_only=True)
-                        actions_shows = []
+                        #Submit all together
+                        if (len(actions) >= num_actions_cached):
+                            tqdm_buffer_bar.write(f"Sending to server! {len(actions)} actions")
+                            r1 = helpers.bulk(client, actions, index=index_name, stats_only=True)
+                            actions = []
+                            r2 = helpers.bulk(client, actions_episodes, index=episode_index_name, stats_only=True)
+                            actions_episodes = []
+                            r3 = helpers.bulk(client, actions_shows, index=show_index_name, stats_only=True)
+                            actions_shows = []
 
-                        if (r1[1] > 0 or r2[1] > 0 or r3[1] > 0):
-                            print("Something went wrong indexing")
+                            tqdm_buffer_bar.reset()
+
+                            if (r1[1] > 0 or r2[1] > 0 or r3[1] > 0):
+                                print("Something went wrong indexing")
                 
     if len(files_to_pool) != 0:
         new_actions = pool.starmap(index_file, files_to_pool)
