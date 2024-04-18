@@ -147,15 +147,13 @@ def index_file(root, file_name, metadata_df, model, index_name, show_index_name)
         #Index transcripts
         for alt in alternatives:
             try:
-                if (client.exists(index=index_name, id=episode_filename + "_" + str(current_id)).body):
-                    continue
-
                 transcript = alt["alternatives"][0]["transcript"]
                 starttime = alt["alternatives"][0]["words"][0]["startTime"]
                 endtime = alt["alternatives"][0]["words"][-1]["endTime"]
                 confidence = alt["alternatives"][0]["confidence"]
 
-                if (transcript == "" or transcript == None):
+                if (client.exists(index=index_name, id=episode_filename + "_" + str(current_id)).body) or (transcript == "" or transcript == None):
+                    current_id += 1
                     continue
 
                 vector = model.encode(transcript)
