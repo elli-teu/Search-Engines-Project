@@ -173,7 +173,10 @@ def create_index(index_name):
     # For simplicity, we'll skip this step
 
     if client.indices.exists(index=index_name):
-        print("Index already exsits!")
+        print(f"Index: {index_name} already exsits!")
+        r = input("You sure you want to continue [Y/N]?")
+        if (r.lower() == "n"):
+            exit(1)
         return
 
     # Create the index
@@ -191,4 +194,5 @@ if (__name__ == "__main__"):
     create_index(INDEX_SHOWS)
 
     # Index the entire dataset
+    print("Indexing folder: " + DATASET_FOLDER)
     index_transcripts_with_metadata_from_folder(DATASET_FOLDER, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, disable_threading=False, max_cores=4) ## Maximum cores depends on your vram and other stuff (play around with it)
