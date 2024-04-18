@@ -44,7 +44,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                     tqdm_bar.update(1)
 
                     if file_name.endswith('.json'):
-                        files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes], index_name, show_index_name))
+                        files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes], episode_index_name, show_index_name))
 
                         if len(files_to_pool) == num_processes*10:
                             new_actions = pool.starmap(index_file, files_to_pool)
@@ -96,20 +96,19 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
             pass
 
 
-def index_file(root, file_name, metadata_df, model, index_name, show_index_name):
+def index_file(root, file_name, metadata_df, model, episode_index_name, show_index_name):
     actions = []
     actions_episodes = []
     actions_shows = []
     file_path = os.path.join(root, file_name)
     with open(file_path, 'r', encoding='utf-8') as file:
-        document = json.load(file)
-        alternatives = document["results"]
-
-        current_id = 0
-
         #Index episodes and shows
         episode_filename = os.path.splitext(file_name)[0]
         episode_row = metadata_df[metadata_df['episode_filename_prefix'] == episode_filename]
+
+        if (client.exists(index=episode_index_name, id=episode_filename).body):
+            # We have already indexed this file
+            return (actions, actions_episodes, actions_shows)
 
         episode = {
             "_id": episode_filename,
@@ -145,6 +144,10 @@ def index_file(root, file_name, metadata_df, model, index_name, show_index_name)
             actions_shows.append(show)
 
         #Index transcripts
+        document = json.load(file)
+        alternatives = document["results"]
+
+        current_id = 0
         for alt in alternatives:
             try:
                 transcript = alt["alternatives"][0]["transcript"]
@@ -152,8 +155,7 @@ def index_file(root, file_name, metadata_df, model, index_name, show_index_name)
                 endtime = alt["alternatives"][0]["words"][-1]["endTime"]
                 confidence = alt["alternatives"][0]["confidence"]
 
-                if (client.exists(index=index_name, id=episode_filename + "_" + str(current_id)).body) or (transcript == "" or transcript == None):
-                    current_id += 1
+                if (transcript == "" or transcript == None):
                     continue
 
                 vector = model.encode(transcript)
