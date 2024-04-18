@@ -75,8 +75,10 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                     episode_row = metadata_df[metadata_df['episode_filename_prefix'] == episode_filename]
 
                     episode = {
+                        "_id": episode_filename,
                         "episode_name": episode_row["episode_name"].item(),
-                        "episode_description": episode_row["episode_description"].item()
+                        "episode_description": episode_row["episode_description"].item(),
+                        "show": episode_row["show_filename_prefix"].item()
                     }
                     actions_episodes.append(episode)
 
@@ -92,8 +94,9 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                     link = xmlroot[0].find('.//link').text
 
                     #avoid duplicates (possibly not needed)
-                    if(prev_showname != episode_row["show_name"].item()):
+                    if(prev_showname != episode_row["show_filename_prefix"].item()):
                         show = {
+                            "_id": episode_row["show_filename_prefix"].item(),
                             "show_name": episode_row["show_name"].item(),
                             "show_description": episode_row["show_description"].item(),
                             "publisher": episode_row["publisher"].item(),
@@ -101,7 +104,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                             "link": link
                         }
                         actions_shows.append(show)
-                        prev_showname = episode_row["show_name"].item()
+                        prev_showname = episode_row["show_filename_prefix"].item()
 
                     #Index transcripts
                     for alt in alternatives:
