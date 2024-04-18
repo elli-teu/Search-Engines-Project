@@ -2,6 +2,7 @@ import json
 from elasticsearch import Elasticsearch, helpers
 import os
 import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import ParseError
 import pandas as pd
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
@@ -124,10 +125,16 @@ def index_file(root, file_name, metadata_df, model, episode_index_name, show_ind
         pathlist[-4] = "show-rss"
         show_rss_path = os.path.sep.join(pathlist) + ".xml"
 
-        tree = ET.parse(show_rss_path)
-        xmlroot = tree.getroot()
-        imageurl = xmlroot[0].find('.//image')[0].text
-        link = xmlroot[0].find('.//link').text
+        try:
+            tree = ET.parse(show_rss_path)
+            xmlroot = tree.getroot()
+            imageurl = xmlroot[0].find('.//image')[0].text
+            link = xmlroot[0].find('.//link').text
+        except ParseError as e:
+            print(f"Parse error at: {show_rss_path}, skipping adding data to show")
+            print(e)
+            imageurl = ""
+            link = ""
 
         showID = episode_row["show_filename_prefix"].item()
 
