@@ -137,6 +137,14 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
 
                     # Index the document into Elasticsearch
             number_of_files += 1
+            
+    if (len(actions) != 0):
+        try:
+            helpers.bulk(client, actions, index=index_name)
+            helpers.bulk(client, actions_episodes, index=episode_index_name)
+            helpers.bulk(client, actions_shows, index=show_index_name)
+        except KeyError:
+            pass
 
 
 def generate_query(query_string, query_type):
