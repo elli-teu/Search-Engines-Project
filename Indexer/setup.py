@@ -1,4 +1,6 @@
 ADDRESS = "https://129.151.196.60:9200"
 API_KEY = "Skp6QzNvNEJxUk1iRlJtSlNXYkU6LW1vWlhhNjhTRnlud1BlaDZxVEN5dw=="
-INDEX = "podcast_transcripts"
-DATASET_FOLDER = "../dataset_subset/"
+INDEX_TRANSCRIPTS = "podcast_transcripts"
+INDEX_EPISODES = "podcast_episodes"
+INDEX_SHOWS = "podcast_shows"
+DATASET_FOLDER = "dataset/spotify/spotify-podcasts-2020/"
