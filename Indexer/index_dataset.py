@@ -47,11 +47,8 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                 if file_name.endswith('.json'):
                     files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)]))
 
-                    if len(files_to_pool) == num_processes:
-                        if disable_threading:
-                            new_actions = (index_file(*files_to_pool[0]),)
-                        else:
-                            new_actions = pool.starmap(index_file, files_to_pool)
+                    if len(files_to_pool) == num_processes*10:
+                        new_actions = pool.starmap(index_file, files_to_pool)
                         
                         files_to_pool = []
                         for a in new_actions:
@@ -60,7 +57,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                             actions_shows.append(a[2])
 
                     #Submit all together
-                    if(len(actions) >= num_actions_cached):
+                    if (len(actions) >= num_actions_cached):
                         tqdm_bar.write(f"Sending to server! {len(actions)} actions")
                         r1 = helpers.bulk(client, actions, index=index_name, stats_only=True)
                         actions = []
