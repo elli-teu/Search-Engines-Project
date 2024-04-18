@@ -1,1 +1,4 @@
+To index:
+create a folder called dataset_subset and copy the dataset into here, make sure it has the same structure as the spotify dataset but include less folders from podcasts-transcrips/..
+
 I have index podcasts-transcripts/0 to podcasts-transcripts/2 ~ 40k files
