@@ -7,13 +7,16 @@ import warnings
 from urllib3.exceptions import InsecureRequestWarning
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
+from multiprocessing.pool import ThreadPool
+from multiprocessing import cpu_count
+import time
 
 from setup import ADDRESS, API_KEY, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, DATASET_FOLDER
 
 # Filter out the specific warning about insecure HTTPS requests
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
-def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode_index_name, show_index_name):
+def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode_index_name, show_index_name, disable_threading = True, max_cores = 4):
     transcript_file_path = os.path.join(folder_path, "podcasts-transcripts")
     metadata_file_path = os.path.join(folder_path, "metadata.tsv")
     rss_file_path = os.path.join(folder_path, "show-rss")
@@ -24,98 +27,63 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
     actions_episodes = []
     actions_shows = []
 
-    prev_showname = ""
+    num_actions_cached = 5000
+    num_processes = max_cores if not disable_threading else 1 # use 1/2 of all available threads
+    pool = ThreadPool(processes=num_processes)
+    models = [SentenceTransformer('sentence-transformers/all-mpnet-base-v2') for x in range(num_processes)]
+    files_to_pool = []
 
-    indexed_files = 0
+    if disable_threading:
+        print("Running sequentially")
+    else:
+        print(f"Running on {num_processes} cores!")
 
-    for root, dirs, files in os.walk(transcript_file_path):
-        for file_name in tqdm(files, f"Indexing {root}"):
-            if (indexed_files % 100 == 0):
-                print(f"Index files: {indexed_files}")
-            indexed_files += 1
+    file_count = sum(len(files) for _, _, files in os.walk(transcript_file_path)) # Inefficient but only once so ok
+    with tqdm(total=file_count, desc="Indexing files") as tqdm_bar:
+        for root, dirs, files in os.walk(transcript_file_path):
+            for file_name in files:
+                tqdm_bar.update(1)
 
-            if file_name.endswith('.json'):
-                file_path = os.path.join(root, file_name)
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    document = json.load(file)
-                    alternatives = document["results"]
+                if file_name.endswith('.json'):
+                    files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)]))
 
-                    current_id = 0
+                    if len(files_to_pool) == num_processes:
+                        if disable_threading:
+                            new_actions = (index_file(*files_to_pool[0]),)
+                        else:
+                            new_actions = pool.starmap(index_file, files_to_pool)
+                        
+                        files_to_pool = []
+                        for a in new_actions:
+                            actions.append(a[0])
+                            actions_episodes.append(a[1])
+                            actions_shows.append(a[2])
 
-                    #Index episodes and shows
-                    episode_filename = os.path.splitext(file_name)[0]
-                    episode_row = metadata_df[metadata_df['episode_filename_prefix'] == episode_filename]
+                    #Submit all together
+                    if(len(actions) >= num_actions_cached):
+                        tqdm_bar.write(f"Sending to server! {len(actions)} actions")
+                        r1 = helpers.bulk(client, actions, index=index_name, stats_only=True)
+                        actions = []
+                        r2 = helpers.bulk(client, actions_episodes, index=episode_index_name, stats_only=True)
+                        actions_episodes = []
+                        r3 = helpers.bulk(client, actions_shows, index=show_index_name, stats_only=True)
+                        actions_shows = []
 
-                    episode = {
-                        "_id": episode_filename,
-                        "episode_name": episode_row["episode_name"].item(),
-                        "episode_description": episode_row["episode_description"].item(),
-                        "show": episode_row["show_filename_prefix"].item()
-                    }
-                    actions_episodes.append(episode)
+                        if (r1[1] > 0 or r2[1] > 0 or r3[1] > 0):
+                            print("Something went wrong indexing")
+                
+    if len(files_to_pool) != 0:
+        new_actions = pool.starmap(index_file, files_to_pool)
+        files_to_pool = []
+        for a in new_actions:
+            print(len(a))
+            actions.append(a[0])
+            actions_episodes.append(a[1])
+            actions_shows.append(a[2])        
 
-                    #ugly but should work (get image and podcast link)
-                    #assuming "correct" directory names
-                    pathlist = file_path.replace("/", os.path.sep).split(os.path.sep)[:-1]
-                    pathlist[-4] = "show-rss"
-                    show_rss_path = os.path.sep.join(pathlist) + ".xml"
-
-                    tree = ET.parse(show_rss_path)
-                    xmlroot = tree.getroot()
-                    imageurl = xmlroot[0].find('.//image')[0].text
-                    link = xmlroot[0].find('.//link').text
-
-                    showID = episode_row["show_filename_prefix"].item()
-
-                    #avoid duplicates (possibly not needed)
-                    if(prev_showname != showID):
-                        show = {
-                            "_id": showID,
-                            "show_name": episode_row["show_name"].item(),
-                            "show_description": episode_row["show_description"].item(),
-                            "publisher": episode_row["publisher"].item(),
-                            "image": imageurl,
-                            "link": link
-                        }
-                        actions_shows.append(show)
-                        prev_showname = episode_row["show_filename_prefix"].item()
-
-                    #Index transcripts
-                    for alt in alternatives:
-                        try:
-                            transcript = alt["alternatives"][0]["transcript"]
-                            starttime = alt["alternatives"][0]["words"][0]["startTime"]
-                            endtime = alt["alternatives"][0]["words"][-1]["endTime"]
-                            confidence = alt["alternatives"][0]["confidence"]
-                            vector = model.encode(transcript)
-
-                            contents = {
-                                "_id": episode_filename + "_" + str(current_id),
-                                "transcript": transcript,
-                                "show_id": showID,
-                                "starttime": starttime,
-                                "endtime": endtime,
-                                "confidence": confidence,
-                                "vector":vector
-                            }
-                            current_id += 1
-                            actions.append(contents)
-
-                            #Submit all together
-                            if(len(actions) >= 5000):
-                                r1 = helpers.bulk(client, actions, index=index_name, stats_only=True)
-                                actions = []
-                                r2 = helpers.bulk(client, actions_episodes, index=episode_index_name, stats_only=True)
-                                actions_episodes = []
-                                r3 = helpers.bulk(client, actions_shows, index=show_index_name, stats_only=True)
-                                actions_shows = []
-
-                                if (r1[1] > 0 or r2[1] > 0 or r3[1] > 0):
-                                    print("Something went wrong indexing")
-                            
-                        except KeyError:
-                            pass
-                    
+    # Close thread pool to prevent memory leaks etc.
+    pool.close()
+    pool.join() 
 
     if (len(actions) != 0):
         try:
@@ -128,6 +96,84 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
         except KeyError:
             pass
 
+
+def index_file(root, file_name, metadata_df, model):
+    actions = []
+    actions_episodes = []
+    actions_shows = []
+    file_path = os.path.join(root, file_name)
+    with open(file_path, 'r', encoding='utf-8') as file:
+        document = json.load(file)
+        alternatives = document["results"]
+
+        current_id = 0
+
+        #Index episodes and shows
+        episode_filename = os.path.splitext(file_name)[0]
+        episode_row = metadata_df[metadata_df['episode_filename_prefix'] == episode_filename]
+
+        episode = {
+            "_id": episode_filename,
+            "episode_name": episode_row["episode_name"].item(),
+            "episode_description": episode_row["episode_description"].item(),
+            "show": episode_row["show_filename_prefix"].item()
+        }
+        actions_episodes.append(episode)
+
+        #ugly but should work (get image and podcast link)
+        #assuming "correct" directory names
+        pathlist = file_path.replace("/", os.path.sep).split(os.path.sep)[:-1]
+        pathlist[-4] = "show-rss"
+        show_rss_path = os.path.sep.join(pathlist) + ".xml"
+
+        tree = ET.parse(show_rss_path)
+        xmlroot = tree.getroot()
+        imageurl = xmlroot[0].find('.//image')[0].text
+        link = xmlroot[0].find('.//link').text
+
+        showID = episode_row["show_filename_prefix"].item()
+
+        #avoid duplicates (possibly not needed)
+        #if(prev_showname != showID):
+        show = {
+            "_id": showID,
+            "show_name": episode_row["show_name"].item(),
+            "show_description": episode_row["show_description"].item(),
+            "publisher": episode_row["publisher"].item(),
+            "image": imageurl,
+            "link": link
+        }
+        actions_shows.append(show)
+            #prev_showname = episode_row["show_filename_prefix"].item()
+
+        #Index transcripts
+        for alt in alternatives:
+            try:
+                transcript = alt["alternatives"][0]["transcript"]
+                starttime = alt["alternatives"][0]["words"][0]["startTime"]
+                endtime = alt["alternatives"][0]["words"][-1]["endTime"]
+                confidence = alt["alternatives"][0]["confidence"]
+                if len(transcript) > 25:
+                    vector = model.encode(transcript, device="cuda")
+                else:
+                    vector = model.encode(transcript, device="cpu") # cpu faster for short sentences (idk where to set the cutoff length)
+
+                contents = {
+                    "_id": episode_filename + "_" + str(current_id),
+                    "transcript": transcript,
+                    "show_id": showID,
+                    "starttime": starttime,
+                    "endtime": endtime,
+                    "confidence": confidence,
+                    "vector":vector
+                }
+                current_id += 1
+                actions.append(contents)
+                
+            except KeyError:
+                pass
+
+    return (actions, actions_episodes, actions_shows)
 
 def create_index(index_name):
     # Define index settings and mappings if needed
@@ -147,13 +193,10 @@ if (__name__ == "__main__"):
     # Initialize Elasticsearch client
     client = Elasticsearch(ADDRESS, api_key=API_KEY, verify_certs=False, ssl_show_warn=False)
 
-    # Init word2vec
-    model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-
     # Create index
     create_index(INDEX_TRANSCRIPTS)
     create_index(INDEX_EPISODES)
     create_index(INDEX_SHOWS)
 
     # Index the entire dataset
-    index_transcripts_with_metadata_from_folder(DATASET_FOLDER, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS)
+    index_transcripts_with_metadata_from_folder(DATASET_FOLDER, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, disable_threading=False, max_cores=4) ## Maximum cores depends on your vram and other stuff (play around with it)
