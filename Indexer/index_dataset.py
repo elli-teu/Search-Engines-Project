@@ -8,8 +8,6 @@ from urllib3.exceptions import InsecureRequestWarning
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 from multiprocessing.pool import ThreadPool
-from multiprocessing import cpu_count
-import time
 
 from setup import ADDRESS, API_KEY, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, DATASET_FOLDER
 
@@ -45,7 +43,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                 tqdm_bar.update(1)
 
                 if file_name.endswith('.json'):
-                    files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)]))
+                    files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes]))
 
                     if len(files_to_pool) == num_processes*10:
                         new_actions = pool.starmap(index_file, files_to_pool)
@@ -150,10 +148,7 @@ def index_file(root, file_name, metadata_df, model):
                 starttime = alt["alternatives"][0]["words"][0]["startTime"]
                 endtime = alt["alternatives"][0]["words"][-1]["endTime"]
                 confidence = alt["alternatives"][0]["confidence"]
-                if len(transcript) > 25:
-                    vector = model.encode(transcript, device="cuda")
-                else:
-                    vector = model.encode(transcript, device="cpu") # cpu faster for short sentences (idk where to set the cutoff length)
+                vector = model.encode(transcript)
 
                 contents = {
                     "_id": episode_filename + "_" + str(current_id),
