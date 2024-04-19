@@ -1,5 +1,6 @@
 import json
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import NotFoundError
 import os
 from setup import ADDRESS, API_KEY, INDEX
 import re
@@ -46,6 +47,38 @@ def index_transcripts_from_folder(folder_path, index_name):
             number_of_files += 1
 
 
+def get_transcript_metadata(result):
+    show = result["show_id"]
+    metadata = {}
+    episode_query = {
+        "query": {
+            "match": {"show": show}
+        }
+    }
+    episode_response = execute_query(episode_query, n=1, index="podcast_episodes")
+    episode_hits = episode_response["hits"]["hits"]
+    if len(episode_hits) != 0:
+        episode = episode_hits[0]["_source"]
+        metadata["episode_name"] = episode["episode_name"]
+        metadata["episode_description"] = episode["episode_description"]
+    else:
+        metadata["episode_name"] = "null"
+        metadata["episode_description"] = "null"
+
+    try:
+        show_response = client.get(index="podcast_shows", id=show)
+        show = show_response["_source"]
+        metadata["podcast_name"] = show["show_name"]
+        metadata["podcast_description"] = show["show_description"]
+        metadata["publisher"] = show["publisher"]
+    except NotFoundError:
+        metadata["podcast_name"] = "null"
+        metadata["podcast_description"] = "null"
+        metadata["publisher"] = "null"
+
+    return metadata
+
+
 def generate_query(query_string, query_type):
     if query_type == QueryType.smart_query:
         words = query_string.split(" ")
@@ -62,7 +95,9 @@ def generate_query(query_string, query_type):
         phases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
         must_occur_list.extend(phases_list)
 
-        should_occur_words = [x for x in words if x not in must_occur_words and x not in must_not_occur_words and x not in " ".join(phrases)]
+        should_occur_words = [x for x in words if
+                              x not in must_occur_words and x not in must_not_occur_words and x not in " ".join(
+                                  phrases)]
         should_occur_tokens = get_tokens(" ".join(should_occur_words))
         should_occur_list = [{"term": {"transcript": token}} for token in should_occur_tokens]
 
@@ -104,8 +139,8 @@ def generate_query(query_string, query_type):
     return query
 
 
-def execute_query(query, n=10):
-    return client.search(index=INDEX, body=query, size=n)
+def execute_query(query, n=10, index=INDEX):
+    return client.search(index=index, body=query, size=n)
 
 
 def delete_index(index_name):

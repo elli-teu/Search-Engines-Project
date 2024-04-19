@@ -3,6 +3,23 @@
 <head>
     <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
     <link href="./static/css/result.css" rel="stylesheet" />
+    <style>
+        /* Define the CSS for the transcript box */
+        .transcript-box {
+            border: 1px solid #ccc; /* Border style */
+            padding: 10px; /* Padding around the content */
+            margin-top: 10px; /* Margin from the top */
+            background-color: #f9f9f9; /* Background color */
+            border-radius: 5px; /* Rounded corners */
+        }
+
+        /* Hide the overflow text */
+        .overflow-hidden {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
     <title>Document</title>
 </head>
 <body>
@@ -11,11 +28,12 @@
         {% for result in results %}
             <div class="result-box">
                 <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100"> <!-- Display the image if available -->
-                <h3>{{ result.podcast_name }}</h3> <!-- Display the title of the result -->
-                <p>{{ result.podcast_description }}</p> <!-- Display the description of the result -->
-                <a href="{{ result.link }}" target="_blank">Podcast Link</a> <!-- Display a link to read more -->
+                <h3>{{ result.podcast_name }}</h3>
+                <p >{{ result.podcast_description }}</p>
+                <a href="{{ result.link }}">Podcast link</a>
                 <h3>{{ result.episode_name}}</h3>
-                <p>{{ result.episode_description }}</p>
+                <p class="description overflow-hidden">{{ result.episode_description }}</p>
+                <a href="#" style="color:#5c5b5b;" class="show-more">Show more</a>
                 <div class="transcript-box">
                     <p>{{ result.transcript }}</p>
                 </div>
@@ -30,5 +48,24 @@
     <div class="v1_9"></div>
     <span class="v1_7">PodysseyCast</span>
 </div>
+
+<script>
+    // JavaScript to toggle visibility of description when "Show more" is clicked
+    document.addEventListener("DOMContentLoaded", function() {
+        var seeMoreLinks = document.querySelectorAll('.show-more');
+        seeMoreLinks.forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                var description = this.parentNode.querySelector('.description');
+                description.classList.toggle('overflow-hidden');
+                if (description.classList.contains('overflow-hidden')) {
+                    this.textContent = 'Show more';
+                } else {
+                    this.textContent = 'Show less';
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>
