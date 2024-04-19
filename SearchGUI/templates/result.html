@@ -19,6 +19,11 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        .show-more {
+            color: grey; /* Set color to grey */
+            text-decoration: none; /* Remove underline */
+            display: none; /* Initially hide the link */
+        }
     </style>
     <title>Document</title>
 </head>
@@ -33,7 +38,7 @@
                 <a href="{{ result.link }}">Podcast link</a>
                 <h3>{{ result.episode_name}}</h3>
                 <p class="description overflow-hidden">{{ result.episode_description }}</p>
-                <a href="#" style="color:#5c5b5b;" class="show-more">Show more</a>
+                <a href="#" class="show-more">Show more</a>
                 <div class="transcript-box">
                     <p>{{ result.transcript }}</p>
                 </div>
@@ -52,11 +57,20 @@
 <script>
     // JavaScript to toggle visibility of description when "Show more" is clicked
     document.addEventListener("DOMContentLoaded", function() {
-        var seeMoreLinks = document.querySelectorAll('.show-more');
-        seeMoreLinks.forEach(function(link) {
+        var descriptions = document.querySelectorAll('.description');
+        descriptions.forEach(function(description) {
+            if (description.scrollWidth > description.clientWidth) {
+                // Show the "Show more" link if the description can be expanded
+                var showMoreLink = description.nextElementSibling;
+                showMoreLink.style.display = 'inline';
+            }
+        });
+
+        var showMoreLinks = document.querySelectorAll('.show-more');
+        showMoreLinks.forEach(function(link) {
             link.addEventListener('click', function(event) {
                 event.preventDefault();
-                var description = this.parentNode.querySelector('.description');
+                var description = this.previousElementSibling;
                 description.classList.toggle('overflow-hidden');
                 if (description.classList.contains('overflow-hidden')) {
                     this.textContent = 'Show more';

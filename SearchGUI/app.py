@@ -5,8 +5,8 @@ app = Flask(__name__)
 
 def search_query(query):
     query = search.generate_query(query, search.QueryType.smart_query)
-    response = search.execute_query(query, n=10)
-    results = search.get_first_n_results(response, n=10)
+    response = search.execute_query(query, n=100)
+    results = search.get_first_n_results(response, n=100)
     # Implement your search logic here
     # This could be searching in a database, using a library like Whoosh, or any other method
     final_results = []
