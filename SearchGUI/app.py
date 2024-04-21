@@ -5,11 +5,10 @@ app = Flask(__name__)
 
 def search_query(query):
     query = search.generate_query(query, search.QueryType.smart_query)
-    response = search.execute_query(query, n=100)
-    results = search.get_first_n_results(response, n=100)
+    response = search.execute_query(query, n=10)
+    results = search.get_first_n_results(response, n=10)
     # Implement your search logic here
     # This could be searching in a database, using a library like Whoosh, or any other method
-    final_results = []
     for res in results:
         metadata = search.get_transcript_metadata(res)
         res["podcast_name"] = metadata["podcast_name"]
@@ -17,13 +16,16 @@ def search_query(query):
         res["publisher"] = metadata["publisher"]
         res["episode_name"] = metadata["episode_name"]
         res["episode_description"] = metadata["episode_description"]
-        res["image"] = "https://i.guim.co.uk/img/media/43352be36da0eb156e8551d775a57fadba8ae6d7/0_0_1440_864/master/1440.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=1829611852af3ffc6460b4068e20bcbc"
-        res["link"] = "https://open.spotify.com/show/54W3NtZwf5ImPtPO8B4CMy?si=e8ea2898e2914e0a"
+        res["image"] = metadata["image"]  # "https://i.guim.co.uk/img/media/43352be36da0eb156e8551d775a57fadba8ae6d7/0_0_1440_864/master/1440.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=1829611852af3ffc6460b4068e20bcbc"
+        res["link"] = metadata["link"]  # "https://open.spotify.com/show/54W3NtZwf5ImPtPO8B4CMy?si=e8ea2898e2914e0a"
     return results
 
 
-@app.route('/result', methods=['POST'])
+@app.route('/result', methods=['POST', 'GET'])
 def result():
+    if request.method == 'GET':
+        return render_template('result.html', results=[])
+
     query = request.form['query']
 
     # Process the search query (e.g., pass it to a Python function)
@@ -39,4 +41,4 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)

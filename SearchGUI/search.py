@@ -71,10 +71,14 @@ def get_transcript_metadata(result):
         metadata["podcast_name"] = show["show_name"]
         metadata["podcast_description"] = show["show_description"]
         metadata["publisher"] = show["publisher"]
+        metadata["link"] = show["link"]
+        metadata["image"] = show["image"]
     except NotFoundError:
         metadata["podcast_name"] = "null"
         metadata["podcast_description"] = "null"
         metadata["publisher"] = "null"
+        metadata["link"] = "null"
+        metadata["image"] = "null"
 
     return metadata
 

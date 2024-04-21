@@ -15,14 +15,15 @@ body {
   overflow: hidden;
 }
 .v3_17 {
-  width: 663px;
-  height: 52px;
+  width: 90%;
+  height: 101%;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 242px;
-  left: 640px;
-  border: 1px solid rgba(0,0,0,0.6399999856948853);
+  left: 0%;
+  top:0px;
+  border: 0px solid rgba(0,0,0,0);
+  padding: 10px;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   border-bottom-left-radius: 15px;
@@ -53,7 +54,9 @@ body {
   opacity: 1;
   position: absolute;
   top: 88px;
-  left: 640px;
+  left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   border-bottom-left-radius: 15px;
@@ -65,8 +68,10 @@ body {
   width: 209px;
   color: rgba(0,0,0,1);
   position: absolute;
-  top: 117px;
-  left: 917px;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
   font-family: Inter;
   font-weight: Semi Bold;
   font-size: 30px;
@@ -82,7 +87,42 @@ body {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 105px;
-  left: 800px;
+  left: 25%;
+  top: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
   overflow: hidden;
+}
+
+.search-image {
+    position: absolute; /* Set position to absolute */
+    top: 0; /* Align to the top */
+    right: 0; /* Align to the right */
+    height: 100%; /* Occupy full height of the container */
+    padding-right: 10px; /* Add padding to create space between the image and the input */
+    box-sizing: border-box; /* Include padding in the element's total width and height */
+}
+
+.v3_17-container {
+    position: relative; /* Set position to relative */
+  width: 663px;
+  height: 52px;
+  background: rgba(255,255,255,1);
+  opacity: 1;
+  position: absolute;
+  top: 242px;
+  left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  border: 1px solid rgba(0,0,0,0.6399999856948853);
+  padding: 10px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  overflow: hidden;
+}
+
+.search-button {
+    cursor: pointer; /* Show pointer cursor on hover */
 }

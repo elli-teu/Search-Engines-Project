@@ -11,6 +11,8 @@
             margin-top: 10px; /* Margin from the top */
             background-color: #f9f9f9; /* Background color */
             border-radius: 5px; /* Rounded corners */
+            justify-content: center; /* Center horizontally */
+            align-items: center;
         }
 
         /* Hide the overflow text */
@@ -28,14 +30,15 @@
     <title>Document</title>
 </head>
 <body>
+
 <div class="v1_2">
     <div class="v1_12">
         {% for result in results %}
             <div class="result-box">
-                <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100"> <!-- Display the image if available -->
+                <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100">
                 <h3>{{ result.podcast_name }}</h3>
                 <p >{{ result.podcast_description }}</p>
-                <a href="{{ result.link }}">Podcast link</a>
+                <a href="{{ result.link }}" target="{{ result.link }}">Podcast link</a>
                 <h3>{{ result.episode_name}}</h3>
                 <p class="description overflow-hidden">{{ result.episode_description }}</p>
                 <a href="#" class="show-more">Show more</a>
@@ -46,12 +49,19 @@
         {% endfor %}
     </div>
     <form action="/result" method="post">
-    <input class="v3_35" name="query" placeholder="Enter your search query">
+        <div class="v3_35-container">
+        <input class="v3_35" name="query" placeholder="Enter your search query">
+        <button class="search-button">
+            <img src="static/images/search_icon.png" class="search-image"/>
+        </button>
+        </div>
     </form>
     <div class="name"></div>
     <div class="v1_48"></div>
     <div class="v1_9"></div>
-    <span class="v1_7">PodysseyCast</span>
+    <form action="/" method="get">
+        <button class="v1_7 transparent-button">PodysseyCast</button>
+    </form>
 </div>
 
 <script>

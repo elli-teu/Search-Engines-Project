@@ -20,7 +20,7 @@ body {
         }
 
 .result-box {
-  width: 752px;
+  width: 100%;
   background: rgba(250, 250, 250, 1);
   opacity: 1;
   margin-bottom: 30px; /* Increase the margin-bottom value to increase the offset */
@@ -74,16 +74,16 @@ body {
   overflow: hidden;
 }
 .v1_12 {
-  width: 752px;
-  height: 400px;
+  width: 50%;
+  height: 45%;
   background: url("../images/v1_12.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 274px;
-  left: 584px;
+  margin-left: 25%;
+  top: 20%;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
   border-bottom-left-radius: 20px;
@@ -491,14 +491,15 @@ body {
   text-align: left;
 }
 .v3_35 {
-  width: 638px;
-  height: 50px;
+  width: 90%;
+  height: 101%;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 135px;
-  left: 641px;
-  border: 0.699999988079071px solid rgba(0,0,0,0.6399999856948853);
+  padding: 10px;
+  left: 0px;
+  top: 0px;
+  border: 0px solid rgba(0,0,0,0);
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   border-bottom-left-radius: 15px;
@@ -542,4 +543,44 @@ body {
   font-size: 30px;
   opacity: 1;
   text-align: left;
+}
+.transparent-button {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    /* Add additional styling as needed */
+}
+
+.v3_35-container {
+    position: relative; /* Set position to relative */
+  width: 663px;
+  height: 52px;
+  background: rgba(255,255,255,1);
+  opacity: 1;
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  border: 1px solid rgba(0,0,0,0.6399999856948853);
+  padding: 10px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  overflow: hidden;
+}
+
+.search-button {
+    cursor: pointer; /* Show pointer cursor on hover */
+}
+
+.search-image {
+    position: absolute; /* Set position to absolute */
+    top: 0; /* Align to the top */
+    right: 0; /* Align to the right */
+    height: 100%; /* Occupy full height of the container */
+    padding-right: 10px; /* Add padding to create space between the image and the input */
+    box-sizing: border-box; /* Include padding in the element's total width and height */
 }
