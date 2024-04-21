@@ -8,17 +8,17 @@ import warnings
 from urllib3.exceptions import InsecureRequestWarning
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
-from multiprocessing.pool import ThreadPool
+from elastic_transport import ConnectionTimeout
+import time
 
 from setup import ADDRESS, API_KEY, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, DATASET_FOLDER
 
 # Filter out the specific warning about insecure HTTPS requests
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
-def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode_index_name, show_index_name, disable_threading = True, max_cores = 4):
+def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode_index_name, show_index_name):
     transcript_file_path = os.path.join(folder_path, "podcasts-transcripts")
     metadata_file_path = os.path.join(folder_path, "metadata.tsv")
-    rss_file_path = os.path.join(folder_path, "show-rss")
     
     metadata_df = pd.read_csv(metadata_file_path, delimiter='\t', dtype="string")
     
@@ -27,15 +27,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
     actions_shows = []
 
     num_actions_cached = 5000
-    num_processes = max_cores if not disable_threading else 1 # use 1/2 of all available threads
-    pool = ThreadPool(processes=num_processes)
-    models = [SentenceTransformer('sentence-transformers/all-mpnet-base-v2') for x in range(num_processes)]
-    files_to_pool = []
-
-    if disable_threading:
-        print("Running sequentially")
-    else:
-        print(f"Running on {num_processes} cores!")
+    model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
 
     file_count = sum(len(files) for _, _, files in os.walk(transcript_file_path)) # Inefficient but only once so ok
     with tqdm(total=file_count, desc="Indexing files") as tqdm_bar:
@@ -45,57 +37,52 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                     tqdm_bar.update(1)
 
                     if file_name.endswith('.json'):
-                        files_to_pool.append((root, file_name, metadata_df, models[len(files_to_pool)%num_processes], episode_index_name, show_index_name))
-
-                        if len(files_to_pool) == num_processes*10:
-                            new_actions = pool.starmap(index_file, files_to_pool)
-                            
-                            files_to_pool = []
-                            for a in new_actions:
-                                tqdm_buffer_bar.update(len(a[0]))
-                                actions.extend(a[0])
-                                actions_episodes.extend(a[1])
-                                actions_shows.extend(a[2])
+                        (new_actions, new_actions_episodes, new_actions_shows) = index_file(root, file_name, metadata_df, model, episode_index_name, show_index_name)
+                        
+                        tqdm_buffer_bar.update(len(new_actions))
+                        actions.extend(new_actions)
+                        actions_episodes.extend(new_actions_episodes)
+                        actions_shows.extend(new_actions_shows)
 
                         #Submit all together
                         if (len(actions) >= num_actions_cached):
-                            tqdm_buffer_bar.write(f"Sending to server! {len(actions)} actions")
-                            r1 = helpers.bulk(client, actions, index=index_name, stats_only=True)
-                            actions = []
-                            r2 = helpers.bulk(client, actions_episodes, index=episode_index_name, stats_only=True)
-                            actions_episodes = []
-                            r3 = helpers.bulk(client, actions_shows, index=show_index_name, stats_only=True)
-                            actions_shows = []
+                            try:
+                                tqdm_buffer_bar.write(f"Sending to server! {len(actions)} actions")
+                                r1 = helpers.bulk(client, actions, index=index_name, stats_only=False)
+                                actions = []
+                                r2 = helpers.bulk(client, actions_episodes, index=episode_index_name, stats_only=False)
+                                actions_episodes = []
+                                r3 = helpers.bulk(client, actions_shows, index=show_index_name, stats_only=False)
+                                actions_shows = []
 
-                            tqdm_buffer_bar.reset()
+                                tqdm_buffer_bar.reset()
 
-                            if (r1[1] > 0 or r2[1] > 0 or r3[1] > 0):
-                                print("Something went wrong indexing")
-                
-    if len(files_to_pool) != 0:
-        new_actions = pool.starmap(index_file, files_to_pool)
-        files_to_pool = []
-        for a in new_actions:
-            print(len(a))
-            actions.append(a[0])
-            actions_episodes.append(a[1])
-            actions_shows.append(a[2])        
+                                if (len(r1[1]) > 0 or len(r2[1]) > 0 or len(r3[1]) > 0):
+                                    tqdm_buffer_bar.write("Something went wrong indexing")
+                                    log_errors("Error sending to server: " + str(r1[1]))
+                                    log_errors("Error sending to server: " + str(r2[1]))
+                                    log_errors("Error sending to server: " + str(r3[1]))
 
-    # Close thread pool to prevent memory leaks etc.
-    pool.close()
-    pool.join() 
+                            except KeyError:
+                                pass
 
     if (len(actions) != 0):
         try:
-            r1 = helpers.bulk(client, actions, index=index_name)
-            r2 = helpers.bulk(client, actions_episodes, index=episode_index_name)
-            r3 = helpers.bulk(client, actions_shows, index=show_index_name)
+            print("Emptying buffers!")
+            r1 = helpers.bulk(client, actions, index=index_name, stats_only=False)
+            r2 = helpers.bulk(client, actions_episodes, index=episode_index_name, stats_only=False)
+            r3 = helpers.bulk(client, actions_shows, index=show_index_name, stats_only=False)
 
-            if (r1[1] > 0 or r2[1] > 0 or r3[1] > 0):
+            if (len(r1[1]) > 0 or len(r2[1]) > 0 or len(r3[1]) > 0):
                 print("Something went wrong indexing")
+                log_errors("Error sending to server: " + str(r1[1]))
+                log_errors("Error sending to server: " + str(r2[1]))
+                log_errors("Error sending to server: " + str(r3[1]))
         except KeyError:
             pass
 
+    print("DONE!")
+    return True
 
 def index_file(root, file_name, metadata_df, model, episode_index_name, show_index_name):
     actions = []
@@ -128,11 +115,24 @@ def index_file(root, file_name, metadata_df, model, episode_index_name, show_ind
         try:
             tree = ET.parse(show_rss_path)
             xmlroot = tree.getroot()
-            imageurl = xmlroot[0].find('.//image')[0].text
-            link = xmlroot[0].find('.//link').text
+            imageurl = xmlroot[0].find('.//image')
+            if (imageurl is None):
+                imageurl = ""
+                print(f"No imageurl found for: {show_rss_path}")
+                log_errors(f"No imageurl found for: {show_rss_path}")
+            else:
+                imageurl = imageurl[0].text
+            link = xmlroot[0].find('.//link')
+            if (link is None):
+                link = ""
+                print(f"No link found for: {show_rss_path}")
+                log_errors(f"No link found for: {show_rss_path}")
+            else:
+                link = link.text
         except ParseError as e:
             print(f"Parse error at: {show_rss_path}, skipping adding data to show")
             print(e)
+            log_errors(f"Parse error at: {show_rss_path}, skipping adding data to show")
             imageurl = ""
             link = ""
 
@@ -164,8 +164,23 @@ def index_file(root, file_name, metadata_df, model, episode_index_name, show_ind
 
                 if (transcript == "" or transcript == None):
                     continue
+                
+                attempts = 0
+                success = False
+                while attempts < 5 and not success:
+                    try:
+                        vector = model.encode(transcript)
+                        success = True
+                    except Exception as e:
+                        print(f"Error with transcript:")
+                        print(transcript)
+                        print('\n')
+                        print(e)
+                        attempts += 1
 
-                vector = model.encode(transcript)
+                if not success:
+                    print("Not success, exiting")
+                    exit(1)
 
                 contents = {
                     "_id": episode_filename + "_" + str(current_id),
@@ -193,15 +208,20 @@ def create_index(index_name):
     # For simplicity, we'll skip this step
 
     if client.indices.exists(index=index_name):
-        print(f"Index: {index_name} already exsits!")
+        print(f"Index: {index_name} already exists!")
         r = input("You sure you want to continue [Y/N]?")
-        if (r.lower() == "n"):
+        if (r.lower() != "y"):
             exit(1)
         return
 
     # Create the index
     client.indices.create(index=index_name)
     print(f"Index '{index_name}' created successfully.")
+
+
+def log_errors(error):
+    with open("logs.txt", "a") as f:
+        f.write(error + "\n\n")
 
 
 if (__name__ == "__main__"):
@@ -215,4 +235,23 @@ if (__name__ == "__main__"):
 
     # Index the entire dataset
     print("Indexing folder: " + DATASET_FOLDER)
-    index_transcripts_with_metadata_from_folder(DATASET_FOLDER, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, disable_threading=False, max_cores=4) ## Maximum cores depends on your vram and other stuff (play around with it)
+
+    attempts = 0
+    success = False
+    finished = False
+    while attempts < 5 and not success:
+        try:
+            finished = index_transcripts_with_metadata_from_folder(DATASET_FOLDER, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS)
+            success = True
+        except ConnectionTimeout as e:
+            print("Connection timed out! Retrying in 10 seconds...")
+            client.close()
+            time.sleep(10)
+            client = Elasticsearch(ADDRESS, api_key=API_KEY, verify_certs=False, ssl_show_warn=False)
+            attempts += 1
+
+    if (finished):
+        print("Completed indexing without any major errors!")
+    else:
+        print("Something went wrong during indexing...")
+        log_errors("Something went wrong during indexing...")
