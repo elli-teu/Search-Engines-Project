@@ -47,38 +47,79 @@ def index_transcripts_from_folder(folder_path, index_name):
             number_of_files += 1
 
 
-def get_transcript_metadata(result):
-    show = result["show_id"]
-    metadata = {}
-    episode_query = {
-        "query": {
-            "match": {"show": show}
-        }
-    }
-    episode_response = execute_query(episode_query, n=1, index="podcast_episodes")
-    episode_hits = episode_response["hits"]["hits"]
-    if len(episode_hits) != 0:
-        episode = episode_hits[0]["_source"]
-        metadata["episode_name"] = episode["episode_name"]
-        metadata["episode_description"] = episode["episode_description"]
-    else:
-        metadata["episode_name"] = "null"
-        metadata["episode_description"] = "null"
+def get_transcript_metadata(results):
+    episode_bulk_requests = []
+    metadata = []
+    shows = []
+    for res in results:
+        show = res["show_id"]
+        shows.append(show)
+        episode_bulk_requests.append({"index": "podcast_episodes"})
+        episode_request = {
+            "query": {
+                "match": {"show": show}
+            }}
+        episode_bulk_requests.append(episode_request)
 
-    try:
-        show_response = client.get(index="podcast_shows", id=show)
-        show = show_response["_source"]
-        metadata["podcast_name"] = show["show_name"]
-        metadata["podcast_description"] = show["show_description"]
-        metadata["publisher"] = show["publisher"]
-        metadata["link"] = show["link"]
-        metadata["image"] = show["image"]
-    except NotFoundError:
-        metadata["podcast_name"] = "null"
-        metadata["podcast_description"] = "null"
-        metadata["publisher"] = "null"
-        metadata["link"] = "null"
-        metadata["image"] = "null"
+    episode_request = "\n".join([json.dumps(request) for request in episode_bulk_requests])
+
+    episode_bulk_response = client.msearch(body=episode_request)
+
+    show_bulk_response = client.mget(index="podcast_shows", body={"ids": shows})
+    for episode_response, show_response in zip(episode_bulk_response["responses"], show_bulk_response["docs"]):
+        this_metadata = {}
+        episode_hits = episode_response["hits"]["hits"]
+        if len(episode_hits) != 0:
+            episode = episode_hits[0]["_source"]
+
+            if "episode_name" in episode:
+                this_metadata["episode_name"] = episode["episode_name"]
+            else:
+                this_metadata["episode_name"] = "null"
+
+            if "episode_name" in episode:
+                this_metadata["episode_description"] = episode["episode_description"]
+            else:
+                this_metadata["episode_description"] = "null"
+        else:
+            this_metadata["episode_name"] = "null"
+            this_metadata["episode_description"] = "null"
+
+        if show_response["found"]:
+            show = show_response["_source"]
+            if "show_name" in show:
+                this_metadata["podcast_name"] = show["show_name"]
+            else:
+                this_metadata["podcast_name"] = "null"
+
+            if "show_description" in show:
+                this_metadata["podcast_description"] = show["show_description"]
+            else:
+                this_metadata["podcast_description"] = "null"
+
+            if "publisher" in show:
+                this_metadata["publisher"] = show["publisher"]
+            else:
+                this_metadata["publisher"] = "null"
+
+            if "link" in show:
+                this_metadata["link"] = show["link"]
+            else:
+                this_metadata["link"] = "null"
+
+            if "image" in show:
+                this_metadata["image"] = show["image"]
+            else:
+                this_metadata["image"] = "null"
+
+        else:
+            this_metadata["podcast_name"] = "null"
+            this_metadata["podcast_description"] = "null"
+            this_metadata["publisher"] = "null"
+            this_metadata["link"] = "null"
+            this_metadata["image"] = "null"
+
+        metadata.append(this_metadata)
 
     return metadata
 
