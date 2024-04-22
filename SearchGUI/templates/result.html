@@ -1,95 +1,111 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css?family=Inter&display=swap"
+      rel="stylesheet"
+    />
     <link href="./static/css/result.css" rel="stylesheet" />
     <style>
-        /* Define the CSS for the transcript box */
-        .transcript-box {
-            border: 1px solid #ccc; /* Border style */
-            padding: 10px; /* Padding around the content */
-            margin-top: 10px; /* Margin from the top */
-            background-color: #f9f9f9; /* Background color */
-            border-radius: 5px; /* Rounded corners */
-            justify-content: center; /* Center horizontally */
-            align-items: center;
-        }
+      /* Define the CSS for the transcript box */
+      .transcript-box {
+        border: 1px solid #ccc; /* Border style */
+        padding: 10px; /* Padding around the content */
+        margin-top: 10px; /* Margin from the top */
+        background-color: #f9f9f9; /* Background color */
+        border-radius: 5px; /* Rounded corners */
+        justify-content: center; /* Center horizontally */
+        align-items: center;
+      }
 
-        /* Hide the overflow text */
-        .overflow-hidden {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .show-more {
-            color: grey; /* Set color to grey */
-            text-decoration: none; /* Remove underline */
-            display: none; /* Initially hide the link */
-        }
+      /* Hide the overflow text */
+      .overflow-hidden {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .show-more {
+        color: grey; /* Set color to grey */
+        text-decoration: none; /* Remove underline */
+        display: none; /* Initially hide the link */
+      }
     </style>
     <title>Document</title>
-</head>
-<body>
-
-<div class="v1_2">
-    <div class="v1_12">
+  </head>
+  <body>
+    <div class="v1_2">
+      <div class="v1_12">
         {% for result in results %}
-            <div class="result-box">
-                <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100">
-                <h3>{{ result.podcast_name }}</h3>
-                <p >{{ result.podcast_description }}</p>
-                <a href="{{ result.link }}" target="{{ result.link }}">Podcast link</a>
-                <h3>{{ result.episode_name}}</h3>
-                <p class="description overflow-hidden">{{ result.episode_description }}</p>
-                <a href="#" class="show-more">Show more</a>
-                <div class="transcript-box">
-                    <p>{{ result.transcript }}</p>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-    <form action="/result" method="post">
-        <div class="v3_35-container">
-        <input class="v3_35" name="query" placeholder="Enter your search query">
-        <button class="search-button">
-            <img src="static/images/search_icon.png" class="search-image"/>
-        </button>
+        <div class="result-box">
+          <img
+            class="img"
+            src="{{ result.image }}"
+            alt="Image"
+            height="100"
+            width="100"
+          />
+          <h2>{{ result.podcast_name }}</h3>
+          <p class="description">{{ result.podcast_description }}</p>
+          <a href="{{ result.link }}" target="{{ result.link }}"
+            >Podcast link</a
+          >
+          <h3>{{ result.episode_name}}</h3>
+          <p class="description overflow-hidden">
+            {{ result.episode_description }}
+          </p>
+          <a href="#" class="show-more">Show more</a>
+          <div class="transcript-box">
+            <p>{{ result.transcript }}</p>
+          </div>
         </div>
-    </form>
-    <div class="name"></div>
-    <div class="v1_48"></div>
-    <div class="v1_9"></div>
-    <form action="/" method="get">
+        {% endfor %}
+      </div>
+      <form action="/result" method="post">
+        <div class="v3_35-container">
+          <input
+            class="v3_35"
+            name="query"
+            placeholder="Enter your search query"
+          />
+          <button class="search-button">
+            <img src="static/images/search_icon.png" class="search-image" />
+          </button>
+        </div>
+      </form>
+      <div class="name"></div>
+      <div class="v1_48"></div>
+      <div class="v1_9"></div>
+      <form action="/" method="get">
         <button class="v1_7 transparent-button">PodysseyCast</button>
-    </form>
-</div>
+      </form>
+    </div>
 
-<script>
-    // JavaScript to toggle visibility of description when "Show more" is clicked
-    document.addEventListener("DOMContentLoaded", function() {
-        var descriptions = document.querySelectorAll('.description');
-        descriptions.forEach(function(description) {
-            if (description.scrollWidth > description.clientWidth) {
-                // Show the "Show more" link if the description can be expanded
-                var showMoreLink = description.nextElementSibling;
-                showMoreLink.style.display = 'inline';
+    <script>
+      // JavaScript to toggle visibility of description when "Show more" is clicked
+      document.addEventListener("DOMContentLoaded", function () {
+        var descriptions = document.querySelectorAll(".description");
+        descriptions.forEach(function (description) {
+          if (description.scrollWidth > description.clientWidth) {
+            // Show the "Show more" link if the description can be expanded
+            var showMoreLink = description.nextElementSibling;
+            showMoreLink.style.display = "inline";
+          }
+        });
+
+        var showMoreLinks = document.querySelectorAll(".show-more");
+        showMoreLinks.forEach(function (link) {
+          link.addEventListener("click", function (event) {
+            event.preventDefault();
+            var description = this.previousElementSibling;
+            description.classList.toggle("overflow-hidden");
+            if (description.classList.contains("overflow-hidden")) {
+              this.textContent = "Show more";
+            } else {
+              this.textContent = "Show less";
             }
+          });
         });
-
-        var showMoreLinks = document.querySelectorAll('.show-more');
-        showMoreLinks.forEach(function(link) {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                var description = this.previousElementSibling;
-                description.classList.toggle('overflow-hidden');
-                if (description.classList.contains('overflow-hidden')) {
-                    this.textContent = 'Show more';
-                } else {
-                    this.textContent = 'Show less';
-                }
-            });
-        });
-    });
-</script>
-</body>
+      });
+    </script>
+  </body>
 </html>
