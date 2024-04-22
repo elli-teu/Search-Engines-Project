@@ -7,9 +7,19 @@ import sys
 from sentence_transformers import SentenceTransformer
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
+import openai
 
 # Filter out the specific warning about insecure HTTPS requests
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
+
+#API KEY
+"""sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ"""
+
+chat_client = openai.OpenAI(
+    # This is the default and can be omitted
+    api_key='sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ',
+)
+messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
 
 sentences = ["This is an example sentence", "Each sentence is converted"]
 
@@ -113,17 +123,59 @@ def generate_query(query_string, query_type):
         }
         
     elif query_type == QueryType.combi_query:
+        """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
+        print(type(query_string))
+        string_list = query_string.split(" ") #Kanske strunta i
+        for string in string_list:
+            print(string)
+            spelling_query = {
+                "query": { 
+                    "match": {"transcript": string}
+                }
+            }
+            
+            res = client.search(body = spelling_query)
+            print(res)
+            print(res['hits']['total']['value'])
+            if res['hits']['total']['value'] == 0:
+                #Sätt query_string till_chat-gpt
+                #Bryt
+                print("hi there")
+                messages.append(
+                    {"role": "user", "content": query_string},
+                )
+                
+                chat = chat_client.chat.completions.create(
+                    messages = messages,
+                
+                
+                    model="gpt-3.5-turbo",
+                )
+                query_string = chat.choices[0].message.content
+                print(f"ChatGPT: {query_string}")
+                messages.append({"role": "assistant", "content": query_string})
+
+                break
+            #på vilken form skickas denna tillbaka? Hur kolla längden?
+
+
+        #Kan välja om vi ska kolla kolla allt med chat-gpt eller om vi ska kolla allt här först
+
         query = {
         "query":{
-            "match": {"transcript": query_string
+            "match": {"transcript": {
+                "query": query_string,
+                "boost": 0.1}
                       },
+            
             #"match": {"title" : query_string} #Skulle vilja ha tillgång till titel för att kunna söka på det
         },
         "knn":{
                     "field": "vector",  # Field containing the vectors
                     "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search
                     #"k": 10,
-                    "num_candidates": 100
+                    "num_candidates": 100,
+                    "boost": 2.0
             
             },
             "_source": ["id", "transcript"],

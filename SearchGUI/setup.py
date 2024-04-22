@@ -7,3 +7,4 @@ CA_CERT = '"C:\\Users\\ELLI\\http_ca.crt"'
 # Elasticsearch username and password
 USERNAME = 'elastic'
 ELASTIC_PASSWORD = 'LXa5qBM=1_9QxTUKDDf8'
+API_GPT = 'sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ'
