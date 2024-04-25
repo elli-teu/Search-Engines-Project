@@ -126,6 +126,7 @@ def get_transcript_metadata(results):
 
 def generate_query(query_string, query_type):
     if query_type == QueryType.smart_query:
+        #Vill börja med att kolla om den innehåller något tecken, isf gör det här
         words = query_string.split(" ")
         words = [x for x in words if len(x) != 0]
         must_occur_words = [x[1:] for x in words if x[0] == "+"]
@@ -155,6 +156,9 @@ def generate_query(query_string, query_type):
                 }
             }
         }
+        #Annars ska en vector search göras
+        #Vi vill kunna skicka in lite olika parametrar
+        
     elif query_type == QueryType.union_query:
         query = {
             "query": {
