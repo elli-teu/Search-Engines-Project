@@ -123,6 +123,7 @@ def generate_query(query_string, query_type):
         }
         
     elif query_type == QueryType.combi_query:
+        #Börja med att kolla om querien innehåller något specialtecken - isf kör special
         """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
         print(type(query_string))
         string_list = query_string.split(" ") #Kanske strunta i
@@ -161,7 +162,7 @@ def generate_query(query_string, query_type):
 
         #Kan välja om vi ska kolla kolla allt med chat-gpt eller om vi ska kolla allt här först
 
-        query = {
+        query = { #Vill söka i titel här
         "query":{
             "match": {"transcript": {
                 "query": query_string,
@@ -179,6 +180,7 @@ def generate_query(query_string, query_type):
             
             },
             "_source": ["id", "transcript"],
+        
         }
 
     # Perform the search
