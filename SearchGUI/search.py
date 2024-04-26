@@ -153,7 +153,7 @@ def get_transcript_metadata(results):
 
 def generate_query(query_string, query_type):
     intersection_boost = 0
-    phrase_boost = 0
+    phrase_boost = 0.6
     union_boost = 0.2
     semantic_boost = 0.9
     confidence_boost = 1
@@ -350,27 +350,50 @@ def generate_query(query_string, query_type):
             else:
                 #do something
                 query = {
-                    "query": {
-                        "function_score": {
-                            "query": {
-                                "match": {
-                                    "transcript": {
-                                        "query": query_string,
-                                        "boost": union_boost
-                                    }
-                                }
-                            },
-                            "script_score": {
-                                "script": {
-                                    "source": "double confidence = doc['confidence'].value; return confidence * params.weight;",
-                                    "params": {
-                                        "weight": confidence_boost
-                                    }
+    "query": {
+        "function_score": {
+            "query": {
+                "bool": {
+                    "should": [
+                        { 
+                            "match": {
+                                "transcript": {
+                                    "query": query_string,
+                                    "boost": union_boost
                                 }
                             }
-                        }
+                        },
+                        {
+                            "match_phrase": {
+                                "transcript": {
+                                    "query": query_string,
+                                    "boost": phrase_boost
+                                }
+                            }
+                        },
+                        {
+                            "bool": {
+                                "must": must_occur_list,
+                                "boost": intersection_boost
+                    }
+                },
+                            
+                    ],
+                    
+                }
+            },
+            "script_score": {
+                "script": {
+                    "source": "double confidence = doc['confidence'].value; return confidence * params.weight;",
+                    "params": {
+                        "weight": confidence_boost
                     }
                 }
+            }
+        }
+    }
+}
+
 
                 
                 #"match": {"title" : query_string} #Skulle vilja ha tillgång till titel för att kunna söka på det
