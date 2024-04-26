@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 
 def search_query(query):
-    query = search.generate_query(query, search.QueryType.new)
+    query = search.generate_query(query, search.QueryType.combi_query)
     query_response = search.execute_query(query, n=20)
     results = search.get_first_n_results(query_response, n=20)
     #results = search.print_first_n_results(query_response, n=20)

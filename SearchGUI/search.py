@@ -36,6 +36,7 @@ class QueryType:
     intersection_query = "intersection"
     phrase_query = "phrase"
     smart_query = "smart"
+    vector_query = "vector"
     combi_query = "combi"
     new = "new"
 
@@ -288,22 +289,26 @@ def generate_query(query_string, query_type):
         print("där")
         cl.IndicesClient(client).refresh()
         print("här")
-        """query = { #Vill söka i titel här
+        query = { #Vill söka i titel här
         
         "knn":{
                     "field": "vector",  # Field containing the vectors
-                    "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search
-                    "k": 20,
-                    "num_candidates": 20,
+                    "query_vector": model.encode(query_string),  # Vector for similarity search
+                    "k": 10,
+                    "num_candidates": 10,
                     
             
             },
             "_source": ["show_id", "transcript"],
         
-        }"""
+        }
+        now = datetime.now()
+        print("titta")
+        model.encode(query_string),
+        print(datetime.now()-now)
         print("hej")
         now = datetime.now()
-        response = client.search(index = INDEX, body = query, size = 20, request_timeout = 10000)
+        response = client.search(index = INDEX, body = query, size = 10, request_timeout = 10000)
         print(response['hits']['total']['value'])
         print(datetime.now()-now)
 
@@ -441,7 +446,7 @@ def check_char(string):
     return match is not None
 
 
-def execute_query(query, n=20, index=INDEX):
+def execute_query(query, n=10, index=INDEX):
     #return client.search(index=index, body=query, size=n, request_timeout=60)
     response = client.search(index=index, body=query,  request_timeout=10000)
     print(response['hits']['total']['value'])
