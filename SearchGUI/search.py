@@ -1,9 +1,33 @@
 import json
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, client as cl
 from elasticsearch.exceptions import NotFoundError
 import os
 from setup import ADDRESS, API_KEY, INDEX
 import re
+import openai
+from sentence_transformers import SentenceTransformer
+from datetime import datetime
+
+# Filter out the specific warning about insecure HTTPS requests
+#warnings.filterwarnings("ignore", category=InsecureRequestWarning)
+
+#API KEY
+"""sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ"""
+
+chat_client = openai.OpenAI(
+    # This is the default and can be omitted
+    api_key='sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ',
+)
+messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
+
+sentences = ["This is an example sentence", "Each sentence is converted"]
+
+model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+embeddings = model.encode(sentences)
+print("hi")
+print(embeddings)
+
+score_threshold = 0.7
 
 
 class QueryType:
@@ -11,6 +35,7 @@ class QueryType:
     intersection_query = "intersection"
     phrase_query = "phrase"
     smart_query = "smart"
+    combi_query = "combi"
 
 
 def index_documents_from_folder(folder_path, index_name):
@@ -184,6 +209,7 @@ def generate_query(query_string, query_type):
             }
         }
     elif query_type == QueryType.combi_query:
+        
         #Börja med att kolla om querien innehåller något specialtecken - isf kör special
         """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
         print(type(query_string))
@@ -196,8 +222,8 @@ def generate_query(query_string, query_type):
                 }
             }
             
-            res = client.search(body = spelling_query)
-            print(res)
+            res = client.search(index = INDEX, body = spelling_query, size= 50)
+            #print(res)
             print(res['hits']['total']['value'])
             if res['hits']['total']['value'] == 0:
                 #Sätt query_string till_chat-gpt
@@ -219,11 +245,15 @@ def generate_query(query_string, query_type):
 
                 break
             #på vilken form skickas denna tillbaka? Hur kolla längden?
-
+        query = {
+            "query": {
+                "match": {"transcript": query_string}
+            }
+        }
 
         #Kan välja om vi ska kolla kolla allt med chat-gpt eller om vi ska kolla allt här först
 
-        query = { #Vill söka i titel här
+        """query = { #Vill söka i titel här
         "query":{
             "match": {"transcript": {
                 "query": query_string,
@@ -235,22 +265,51 @@ def generate_query(query_string, query_type):
         "knn":{
                     "field": "vector",  # Field containing the vectors
                     "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search
-                    #"k": 10,
-                    "num_candidates": 100,
+                    "k": 10,
+                    "num_candidates": 11,
                     "boost": 2.0
             
             },
             "_source": ["id", "transcript"],
         
-        }
+        }"""
+        print("där")
+        cl.IndicesClient(client).refresh()
+        print("här")
+        """query = { #Vill söka i titel här
+        
+        "knn":{
+                    "field": "vector",  # Field containing the vectors
+                    "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search
+                    "k": 20,
+                    "num_candidates": 20,
+                    
+            
+            },
+            "_source": ["show_id", "transcript"],
+        
+        }"""
+        print("hej")
+        now = datetime.now()
+        response = client.search(index = INDEX, body = query, size = 20, request_timeout = 10000)
+        print(response['hits']['total']['value'])
+        print(datetime.now()-now)
+
+        print("hopp")
+        #client.knn_search(index = INDEX, body = query, )
+        print("tjolahopp")
+
 
     else:
         raise ValueError(f"{query_type} is not a valid query type.")
     return query
 
 
-def execute_query(query, n=10, index=INDEX):
-    return client.search(index=index, body=query, size=n)
+def execute_query(query, n=20, index=INDEX):
+    #return client.search(index=index, body=query, size=n, request_timeout=60)
+    response = client.search(index=index, body=query,  request_timeout=10000)
+    print(response['hits']['total']['value'])
+    return response
 
 
 def delete_index(index_name):
@@ -290,7 +349,7 @@ def print_first_n_results(response, n=10):
         print("-" * 30 + "\n")
 
 
-def get_first_n_results(response, n=10):
+def get_first_n_results(response, n=20):
     results = []
     for hit in response['hits']['hits'][:n]:
         result = hit['_source']

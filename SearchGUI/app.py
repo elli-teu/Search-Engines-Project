@@ -4,9 +4,9 @@ app = Flask(__name__)
 
 
 def search_query(query):
-    query = search.generate_query(query, search.QueryType.smart_query)
-    query_response = search.execute_query(query, n=50)
-    results = search.get_first_n_results(query_response, n=50)
+    query = search.generate_query(query, search.QueryType.combi_query)
+    query_response = search.execute_query(query, n=20)
+    results = search.get_first_n_results(query_response, n=20)
     metadata = search.get_transcript_metadata(results)
     for res, data in zip(results, metadata):
         res["podcast_name"] = data["podcast_name"]
