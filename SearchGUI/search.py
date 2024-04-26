@@ -158,7 +158,9 @@ def generate_query(query_string, query_type):
     semantic_boost = 0.9
     confidence_boost = 1
     title_boost = 0.1
-    auto = False
+    auto = True
+    window_size = 20
+    rank_constant = 10
 
     if query_type == QueryType.smart_query:
         #Vill börja med att kolla om den innehåller något tecken, isf gör det här
@@ -343,9 +345,38 @@ def generate_query(query_string, query_type):
             tokens = get_tokens(query_string)
             must_occur_list = [{"term": {"transcript": token}} for token in tokens]
             
-            if auto == True:
+            if auto == True: #Ingår inte i gratis:(
                 #do something
-                print("hi")
+                query = {
+                    "sub_searches": [
+                        {
+                            "query": {
+                                "match": {"transcript": query_string}
+                        }
+                        },
+                        {
+                            "query": {
+                                "bool": {
+                                    "must": must_occur_list
+                                }
+                            }
+                        }, 
+                        {
+                            "query": {
+                                "match_phrase": {
+                                    "transcript": query_string
+                                }
+                            }
+                        }
+                    ],
+                    "rank": {
+                       "rrf": {
+                            "window_size": window_size,
+                            "rank_constant": rank_constant
+                        }
+                    }
+                }
+                
 
             else:
                 #do something
