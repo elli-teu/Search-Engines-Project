@@ -7,6 +7,10 @@ import re
 import openai
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
+from urllib3.exceptions import InsecureRequestWarning
+
+# Filter out the specific warning about insecure HTTPS requests
+warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
 
 # Filter out the specific warning about insecure HTTPS requests
