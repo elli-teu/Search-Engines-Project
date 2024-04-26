@@ -8,6 +8,7 @@ import openai
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
 
+
 # Filter out the specific warning about insecure HTTPS requests
 #warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
@@ -36,6 +37,7 @@ class QueryType:
     phrase_query = "phrase"
     smart_query = "smart"
     combi_query = "combi"
+    new = "new"
 
 
 def index_documents_from_folder(folder_path, index_name):
@@ -150,6 +152,14 @@ def get_transcript_metadata(results):
 
 
 def generate_query(query_string, query_type):
+    intersection_boost = 0
+    phrase_boost = 0
+    union_boost = 0.2
+    semantic_boost = 0.9
+    confidence_boost = 1
+    title_boost = 0.1
+    auto = False
+
     if query_type == QueryType.smart_query:
         #Vill börja med att kolla om den innehåller något tecken, isf gör det här
         words = query_string.split(" ")
@@ -298,11 +308,83 @@ def generate_query(query_string, query_type):
         print("hopp")
         #client.knn_search(index = INDEX, body = query, )
         print("tjolahopp")
+    elif query_type == QueryType.new:
+        if check_char(query_string) == True:
+            words = query_string.split(" ")
+            words = [x for x in words if len(x) != 0]
+            must_occur_words = [x[1:] for x in words if x[0] == "+"]
+            must_occur_tokens = get_tokens(" ".join(must_occur_words))
+            must_occur_list = [{"term": {"transcript": token}} for token in must_occur_tokens]
 
+            must_not_occur_words = [x[1:] for x in words if x[0] == "-"]
+            must_not_occur_tokens = get_tokens(" ".join(must_not_occur_words))
+            must_not_occur_list = [{"term": {"transcript": token}} for token in must_not_occur_tokens]
+
+            phrases = re.findall("""["']([^"]*)["']""", query_string)
+            phases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
+            must_occur_list.extend(phases_list)
+
+            should_occur_words = [x for x in words if
+                                x not in must_occur_words and x not in must_not_occur_words and x not in " ".join(
+                                    phrases)]
+            should_occur_tokens = get_tokens(" ".join(should_occur_words))
+            should_occur_list = [{"term": {"transcript": token}} for token in should_occur_tokens]
+
+            query = {
+                "query": {
+                    "bool": {
+                        "must": must_occur_list,
+                        "must_not": must_not_occur_list,
+                        "should": should_occur_list
+                    }
+                }
+            }
+        else:
+            tokens = get_tokens(query_string)
+            must_occur_list = [{"term": {"transcript": token}} for token in tokens]
+            
+            if auto == True:
+                #do something
+                print("hi")
+
+            else:
+                #do something
+                query = {
+                    "query": {
+                        "function_score": {
+                            "query": {
+                                "match": {
+                                    "transcript": {
+                                        "query": query_string,
+                                        "boost": union_boost
+                                    }
+                                }
+                            },
+                            "script_score": {
+                                "script": {
+                                    "source": "double confidence = doc['confidence'].value; return confidence * params.weight;",
+                                    "params": {
+                                        "weight": confidence_boost
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                
+                #"match": {"title" : query_string} #Skulle vilja ha tillgång till titel för att kunna söka på det
+            
+            
 
     else:
         raise ValueError(f"{query_type} is not a valid query type.")
     return query
+
+def check_char(string):
+    pattern = r"""["']([^"]*)["']|\\+|\\-"""
+    match = re.search(pattern, string)
+    return match is not None
 
 
 def execute_query(query, n=20, index=INDEX):
