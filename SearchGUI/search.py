@@ -250,7 +250,7 @@ def generate_query(query_string, query_type):
                 messages.append(
                     {"role": "user", "content": query_string},
                 )
-                
+                #Lägga till temperatur = 0.1?
                 chat = chat_client.chat.completions.create(
                     messages = messages,
                 
@@ -308,8 +308,6 @@ def generate_query(query_string, query_type):
         
         }
         now = datetime.now()
-        print("titta")
-        print(datetime.now()-now)
         print("hej")
         now = datetime.now()
         response = client.search(index = INDEX, body = query, size = 10, request_timeout = 10000)
