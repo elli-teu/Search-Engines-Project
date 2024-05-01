@@ -11,13 +11,13 @@ from tqdm import tqdm
 from elastic_transport import ConnectionTimeout
 import time
 
-from setup import ADDRESS, API_KEY, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, DATASET_FOLDER, transcript_mappings, shows_mappings, episodes_mappings
+from setup import ADDRESS, API_KEY, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, DATASET_FOLDER, TRANSCRIPT_LENGTH, transcript_mappings, shows_mappings, episodes_mappings
 from transcript_indexer import get_transcript_actions
 
 # Filter out the specific warning about insecure HTTPS requests
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
-def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode_index_name, show_index_name):
+def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode_index_name, show_index_name, transcript_length):
     transcript_file_path = os.path.join(folder_path, "podcasts-transcripts")
     metadata_file_path = os.path.join(folder_path, "metadata.tsv")
     
@@ -38,7 +38,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
                     tqdm_bar.update(1)
 
                     if file_name.endswith('.json'):
-                        (new_actions, new_actions_episodes, new_actions_shows) = index_file(root, file_name, metadata_df, model, index_name, episode_index_name, show_index_name)
+                        (new_actions, new_actions_episodes, new_actions_shows) = index_file(root, file_name, metadata_df, model, index_name, episode_index_name, show_index_name, transcript_length)
                         
                         tqdm_buffer_bar.update(len(new_actions))
                         actions.extend(new_actions)
@@ -85,7 +85,7 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
     print("DONE!")
     return True
 
-def index_file(root, file_name, metadata_df, model, transcript_index_name, episode_index_name, show_index_name):
+def index_file(root, file_name, metadata_df, model, transcript_index_name, episode_index_name, show_index_name, transcript_length):
     actions = []
     actions_episodes = []
     actions_shows = []
@@ -150,7 +150,7 @@ def index_file(root, file_name, metadata_df, model, transcript_index_name, episo
 
         #Index transcripts
         if (not client.exists(index=transcript_index_name, id=episode_filename + "_0").body):
-            actions = get_transcript_actions(file=file, model=model, episode_filename=episode_filename, showID=showID)
+            actions = get_transcript_actions(file=file, model=model, episode_filename=episode_filename, showID=showID, transcript_length=transcript_length)
 
     return (actions, actions_episodes, actions_shows)
 
@@ -189,7 +189,7 @@ if (__name__ == "__main__"):
     finished = False
     while attempts < 5 and not success:
         try:
-            finished = index_transcripts_with_metadata_from_folder(DATASET_FOLDER, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS)
+            finished = index_transcripts_with_metadata_from_folder(DATASET_FOLDER, INDEX_TRANSCRIPTS, INDEX_EPISODES, INDEX_SHOWS, TRANSCRIPT_LENGTH)
             success = True
         except ConnectionTimeout as e:
             print("Connection timed out! Retrying in 60 seconds...")

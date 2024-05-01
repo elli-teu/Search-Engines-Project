@@ -2,7 +2,7 @@ import json
 from sentence_transformers import SentenceTransformer
 
 
-def get_transcripts(file):
+def get_transcripts(file, t_len):
     document = json.load(file)
     alternatives = document["results"]
 
@@ -13,7 +13,7 @@ def get_transcripts(file):
         except KeyError:
             pass
 
-    t_len = 250
+    #t_len = 250
     remainder = 0
     if(episode_word_count < t_len):
         t_len = episode_word_count
@@ -40,7 +40,7 @@ def get_transcripts(file):
             transcript_len = len(t_split)
             if(transcriptbuilder_len == 0):# only runs once, kinda jank
                 starttime = alt["alternatives"][0]["words"][0]["startTime"]
-                starttimes.append(float(starttime))
+                starttimes.append(float(starttime[:-1]))
             if(transcriptbuilder_len + transcript_len <= t_len+r):
                 transcriptbuilder_len += transcript_len
                 if(transcript[0] == " "):
@@ -54,8 +54,8 @@ def get_transcripts(file):
                 transcriptbuilder = " ".join(t_split[offset:]) #reset builder
                 transcriptbuilder_len = len(transcriptbuilder.split())
                 transcripts.append(finaltranscript)
-                endtimes.append(float(endtime))
-                starttimes.append(float(endtime)) #good enough
+                endtimes.append(float(endtime[:-1]))
+                starttimes.append(float(endtime[:-1])) #good enough
                 final_t_iterator += 1
                 if(final_t_iterator >= remainder):
                     r = 0
@@ -68,16 +68,16 @@ def get_transcripts(file):
 
     #ugly
     transcripts.append(transcriptbuilder)
-    endtimes.append(float(alternatives[-1]["alternatives"][0]["words"][-1]["endTime"]))
+    endtimes.append(float(alternatives[-1]["alternatives"][0]["words"][-1]["endTime"][:-1]))
 
-    assert(len(transcripts) == len(endtimes) == len(starttimes), f"Transcripts, endtimes and starttimes are not the same length! {len(transcripts)} {len(endtimes)} {len(starttimes)}")
+    assert(all((len(transcripts) == len(endtimes), len(transcripts) == len(starttimes))), f"Transcripts, endtimes and starttimes are not the same length! {len(transcripts)} {len(endtimes)} {len(starttimes)}")
 
     return (transcripts, starttimes, endtimes)
 
-def get_transcript_actions(file, model: SentenceTransformer, episode_filename: str, showID: str):
+def get_transcript_actions(file, model: SentenceTransformer, episode_filename: str, showID: str, transcript_length: int):
     actions = []
 
-    (transcripts, starttimes, endtimes) = get_transcripts(file)
+    (transcripts, starttimes, endtimes) = get_transcripts(file, transcript_length)
     attempts = 0
     success = False
     while attempts < 5 and not success:

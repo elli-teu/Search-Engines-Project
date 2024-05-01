@@ -1,9 +1,10 @@
 ADDRESS = "https://129.151.196.60:9200"
-API_KEY = "Skp6QzNvNEJxUk1iRlJtSlNXYkU6LW1vWlhhNjhTRnlud1BlaDZxVEN5dw=="
+API_KEY = "dklrT01vOEJoZHJJOEFESnM1UGU6VDdmT1JVVVlUZW1pYUl6NTYtS3dYQQ=="
 INDEX_TRANSCRIPTS = "podcast_transcripts"
 INDEX_EPISODES = "podcast_episodes"
 INDEX_SHOWS = "podcast_shows"
-DATASET_FOLDER = "dataset_subset/spotify-podcasts-2020/" # Make sure this is path to the folder containing "podcasts-transcripts", "show-rss" and "metadata.tsv"
+DATASET_FOLDER = "dataset/spotify/spotify-podcasts-2020/" # Make sure this is path to the folder containing "podcasts-transcripts", "show-rss" and "metadata.tsv"
+TRANSCRIPT_LENGTH = 250
 
 ### INDEX MAPPINGS
 
