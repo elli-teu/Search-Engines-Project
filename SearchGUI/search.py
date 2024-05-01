@@ -8,6 +8,7 @@ from sentence_transformers import SentenceTransformer
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 import openai
+import torch.nn.functional as F
 
 # Filter out the specific warning about insecure HTTPS requests
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
@@ -20,12 +21,21 @@ chat_client = openai.OpenAI(
     api_key='sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ',
 )
 messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
-
-sentences = ["This is an example sentence", "Each sentence is converted"]
+#Ändrat
+"""sentences = ["This is an example sentence", "Each sentence is converted"]
 
 model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-embeddings = model.encode(sentences)
-print("hi")
+embeddings = model.encode(sentences)"""
+matryoshka_dim = 256 #Nyhet
+
+model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True) #Nyhet
+sentences = ['search_query: What is TSNE?', 'search_query: Who is Laurens van der Maaten?']
+"""Följande är bara nyheter för testet, men det visar flera vektorer i samma embeddings"""
+embeddings = model.encode(sentences, convert_to_tensor=True) #Nyhet
+embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[1],)) #Nyhet
+embeddings = embeddings[:, :matryoshka_dim] #Nyhet
+embeddings = F.normalize(embeddings, p=2, dim=1) #Nyhet
+print("hi again")
 print(embeddings)
 
 score_threshold = 0.7
@@ -52,23 +62,32 @@ def index_documents_from_folder(folder_path, index_name):
 def index_transcripts_from_folder(folder_path, index_name):
     number_of_files = 0
     actions = []
+    print("hello")
     for root, dirs, files in os.walk(folder_path):
         for file_name in files:
-            if number_of_files % 100 == 1:
-                print(f"{number_of_files} files indexed.")
+            #if number_of_files % 1 == 1:
+            #print(folder_path)
+            print(f"{number_of_files} files indexed :).")
+            #print(file_name)
             if file_name.endswith('.json'):
                 file_path = os.path.join(root, file_name)
+                #print("Test")
                 with open(file_path, 'r', encoding='utf-8') as file:
                     document = json.load(file)
                     alternatives = document["results"]
                     curr_id = 0
                     for alt in alternatives:
                         try:
+                            #print("Test")
                             transcript = alt["alternatives"][0]["transcript"]
-                            vector = model.encode(transcript)
+                            embeddings = model.encode("search_document: " + transcript, convert_to_tensor=True) #Nyhet
+                            embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[0],)) #Nyhet
+                            embeddings = embeddings[:matryoshka_dim] #Nyhet
+                            vector = F.normalize(embeddings, p=2, dim=0) #Nyhet
+                            #vector = model.encode(transcript) #ändrat
                             #contents = {"transcript": transcript, "vector":vector} #Tror man lägger till vektorn här
                             #client.index(index=index_name, body=contents)
-                            actions.append({"_id" : file_name.replace(".json", "_"+str(curr_id)), "transcript" : transcript, "vector":vector})
+                            actions.append({"_id" : file_name.replace(".json", "_"+str(curr_id)), "transcript" : transcript, "dense_vector":vector.tolist()}) #Nyhet att man MÅSTE skriva tolist()
                             curr_id += 1
                             if len(actions) >= 1000:
                                 helpers.bulk(client, actions, index=index_name)
@@ -109,11 +128,15 @@ def generate_query(query_string, query_type):
             }
         }
     elif query_type == QueryType.vector_query:
+            embeddings = model.encode("search_query: " + query_string, convert_to_tensor=True)
+            embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[0],))
+            embeddings = embeddings[:matryoshka_dim]
+            vector = F.normalize(embeddings, p=2, dim=0)
             query = { #Här lägga till att söka i titel, kombinera med tex intersect/phrase/union
             "query": {
                 "knn": {
-                    "field": "vector",  # Field containing the vectors
-                    "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search
+                    "field": "dense_vector",  # Field containing the vectors
+                    "query_vector": vector.tolist(),  # Vector for similarity search
                     #"k": 10,
                     "num_candidates": 100
                 }
@@ -220,7 +243,7 @@ def create_index(index_name):
     client.indices.create(index=index_name, body=index_mapping) #Ska kanske vara document
     print(f"Index '{index_name}' created successfully.")
 
-def index_transcripts_from_folder(folder_path, index_name):
+"""def index_transcripts_from_folder(folder_path, index_name):
     number_of_files = 0
     for root, dirs, files in os.walk(folder_path):
         for file_name in files:
@@ -240,7 +263,7 @@ def index_transcripts_from_folder(folder_path, index_name):
                             client.index(index=index_name, body=contents)
                         except KeyError:
                             pass
-            number_of_files += 1
+            number_of_files += 1"""
 
 
 
