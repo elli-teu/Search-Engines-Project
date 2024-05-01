@@ -7,6 +7,7 @@ import re
 import openai
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
+import warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 # Filter out the specific warning about insecure HTTPS requests
@@ -297,9 +298,9 @@ def generate_query(query_string, query_type):
         
         "knn":{
                     "field": "vector",  # Field containing the vectors
-                    "query_vector": model.encode(query_string),  # Vector for similarity search
+                    "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search, kanske ska vara .toList()
                     "k": 10,
-                    "num_candidates": 10,
+                    "num_candidates": 20,
                     
             
             },
@@ -308,7 +309,6 @@ def generate_query(query_string, query_type):
         }
         now = datetime.now()
         print("titta")
-        model.encode(query_string),
         print(datetime.now()-now)
         print("hej")
         now = datetime.now()
@@ -316,7 +316,7 @@ def generate_query(query_string, query_type):
         print(response['hits']['total']['value'])
         print(datetime.now()-now)
 
-        print("hopp")
+        
         #client.knn_search(index = INDEX, body = query, )
         print("tjolahopp")
     elif query_type == QueryType.new:
