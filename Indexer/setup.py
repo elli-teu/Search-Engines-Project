@@ -4,7 +4,8 @@ INDEX_TRANSCRIPTS = "podcast_transcripts"
 INDEX_EPISODES = "podcast_episodes"
 INDEX_SHOWS = "podcast_shows"
 DATASET_FOLDER = "dataset/spotify/spotify-podcasts-2020/" # Make sure this is path to the folder containing "podcasts-transcripts", "show-rss" and "metadata.tsv"
-TRANSCRIPT_LENGTH = 250
+TRANSCRIPT_LENGTH = 125
+MATRYOSHKA_DIM = 256
 
 ### INDEX MAPPINGS
 
@@ -22,16 +23,10 @@ transcript_mappings = {
             },
             "show_id": {
                 "type": "text",
-                "fields": {
-                    "keyword": {
-                        "type": "keyword",
-                        "ignore_above": 256
-                    }
-                }
             },
             "vector": {
                 "type": "dense_vector",
-                "dims": 768,
+                "dims": MATRYOSHKA_DIM,
                 "index": True,
                 "similarity": "dot_product",
                 "index_options": {

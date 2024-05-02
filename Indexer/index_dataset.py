@@ -27,8 +27,9 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
     actions_episodes = []
     actions_shows = []
 
-    num_actions_cached = 1000
-    model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+    model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True)
+    
+    num_actions_cached = 2000 # will not be exactly N actions, but at least N
 
     file_count = sum(len(files) for _, _, files in os.walk(transcript_file_path)) # Inefficient but only once so ok
     with tqdm(total=file_count, desc="Indexing files") as tqdm_bar:
@@ -170,7 +171,6 @@ def create_index(index_name, mappings):
 def log_errors(error):
     with open("logs.txt", "a") as f:
         f.write(error + "\n\n")
-
 
 if (__name__ == "__main__"):
     # Initialize Elasticsearch client
