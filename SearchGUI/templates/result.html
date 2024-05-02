@@ -37,13 +37,11 @@
       <div class="v1_12">
         {% for result in results %}
         <div class="result-box">
-          <img
-            class="img"
-            src="{{ result.image }}"
-            alt="Image"
-            height="100"
-            width="100"
-          />
+        {% if result.image and result.image != "null" %}
+            <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
+        {% else %}
+            <img class="img" src="static/images/search_icon.png" alt="Placeholder Image" height="100" width="100" />
+        {% endif %}
           <h3>{{ result.podcast_name }}</h3>
           <p class="description">{{ result.podcast_description }}</p>
           {% if result.link and result.link != "null" %}
