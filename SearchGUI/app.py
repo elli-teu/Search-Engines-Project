@@ -15,7 +15,12 @@ def search_query(query):
         res["episode_name"] = data["episode_name"]
         res["episode_description"] = data["episode_description"]
         res["image"] = data["image"]
-        res["link"] = data["link"]
+        # TODO: Use regex to check for valid URL, otherwise hide it or something.
+        # \w{0,5}(://)[\w-%]+(:\d+)?(/[\w-;?!:@&=+$,?\.#\"<>%]*)*
+        if not data["link"].startswith("http"):
+            res["link"] = "//" + data["link"]
+        else:
+            res["link"] = data["link"]
 
     return results
 

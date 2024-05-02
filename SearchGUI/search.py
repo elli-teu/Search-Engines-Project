@@ -5,6 +5,12 @@ import os
 from setup import ADDRESS, API_KEY, INDEX
 import re
 
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# Filter out the specific warning about insecure HTTPS requests
+warnings.filterwarnings("ignore", category=InsecureRequestWarning)
+
 
 class QueryType:
     union_query = "union"
@@ -48,6 +54,8 @@ def index_transcripts_from_folder(folder_path, index_name):
 
 
 def get_transcript_metadata(results):
+    if len(results) == 0:
+        return []
     episode_bulk_requests = []
     metadata = []
     shows = []
@@ -62,7 +70,7 @@ def get_transcript_metadata(results):
         episode_bulk_requests.append(episode_request)
 
     episode_request = "\n".join([json.dumps(request) for request in episode_bulk_requests])
-
+    print(len(results))
     episode_bulk_response = client.msearch(body=episode_request)
 
     show_bulk_response = client.mget(index="podcast_shows", body={"ids": shows})
