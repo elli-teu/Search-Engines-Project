@@ -70,7 +70,6 @@ def get_transcript_metadata(results):
         episode_bulk_requests.append(episode_request)
 
     episode_request = "\n".join([json.dumps(request) for request in episode_bulk_requests])
-    print(len(results))
     episode_bulk_response = client.msearch(body=episode_request)
 
     show_bulk_response = client.mget(index="podcast_shows", body={"ids": shows})
@@ -111,7 +110,7 @@ def get_transcript_metadata(results):
                 this_metadata["publisher"] = "null"
 
             if "link" in show:
-                this_metadata["link"] = show["link"]
+                this_metadata["link"] = show["link"].lstrip(" ").rstrip(" ")
             else:
                 this_metadata["link"] = "null"
 
@@ -193,6 +192,7 @@ def generate_query(query_string, query_type):
 
 
 def execute_query(query, n=10, index=INDEX):
+    # TODO: This results in 0 results if the query is too long.
     return client.search(index=index, body=query, size=n)
 
 

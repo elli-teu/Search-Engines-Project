@@ -44,7 +44,7 @@
             height="100"
             width="100"
           />
-          <h2>{{ result.podcast_name }}</h3>
+          <h3>{{ result.podcast_name }}</h3>
           <p class="description">{{ result.podcast_description }}</p>
           <a href="{{ result.link }}" target="{{ result.link }}"
             >Podcast link</a
@@ -55,6 +55,7 @@
           </p>
           <a href="#" class="show-more">Show more</a>
           <div class="transcript-box">
+            <p> <b>Time within episode: </b>{{ result.starttime }} </p>
             <p>{{ result.transcript }}</p>
           </div>
         </div>

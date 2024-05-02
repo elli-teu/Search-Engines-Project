@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 import search
+import re
 app = Flask(__name__)
 
 
@@ -9,18 +10,40 @@ def search_query(query):
     results = search.get_first_n_results(query_response, n=50)
     metadata = search.get_transcript_metadata(results)
     for res, data in zip(results, metadata):
+        res["transcript"] = str("...") + res["transcript"] + str("...")
         res["podcast_name"] = data["podcast_name"]
         res["podcast_description"] = data["podcast_description"]
         res["publisher"] = data["publisher"]
         res["episode_name"] = data["episode_name"]
         res["episode_description"] = data["episode_description"]
         res["image"] = data["image"]
-        # TODO: Use regex to check for valid URL, otherwise hide it or something.
-        # \w{0,5}(://)[\w-%]+(:\d+)?(/[\w-;?!:@&=+$,?\.#\"<>%]*)*
-        if not data["link"].startswith("http"):
-            res["link"] = "//" + data["link"]
+        
+        m, s = divmod(res["starttime"], 60)
+        h, m = divmod(m, 60)
+        time_string = ""
+        if h != 0:
+            time_string += f"{int(h)}h:"
+        time_string += f"{int(m)}m:"
+        time_string += f"{int(s)}s"
+        res["starttime"] = time_string
+
+        url_pattern = re.compile(
+            r'(^(?:http|https)://)?'  # http:// or https://
+            r'(?:www\.)?'  # Optional "www." subdomain
+            r'([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,})'  # Domain name
+            r'(?::\d+)?'  # Optional port number
+            r'(?:/?|[/?]\S+)$',  # Optional path
+            re.IGNORECASE
+        )
+        valid_url = url_pattern.match(data["link"])
+        if valid_url is None:
+            data["link"] = "null"
+            """big is this cat that he's enormous hip over 7 months old and he's like the size"""
         else:
-            res["link"] = data["link"]
+            if not data["link"].startswith("http"):
+                res["link"] = "//" + data["link"]
+            else:
+                res["link"] = data["link"]
 
     return results
 
