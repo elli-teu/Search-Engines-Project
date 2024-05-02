@@ -46,9 +46,11 @@
           />
           <h3>{{ result.podcast_name }}</h3>
           <p class="description">{{ result.podcast_description }}</p>
+          {% if result.link and result.link != "null" %}
           <a href="{{ result.link }}" target="{{ result.link }}"
             >Podcast link</a
           >
+          {% endif %}
           <h3>{{ result.episode_name}}</h3>
           <p class="description overflow-hidden">
             {{ result.episode_description }}

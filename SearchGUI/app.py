@@ -17,7 +17,7 @@ def search_query(query):
         res["episode_name"] = data["episode_name"]
         res["episode_description"] = data["episode_description"]
         res["image"] = data["image"]
-        
+
         m, s = divmod(res["starttime"], 60)
         h, m = divmod(m, 60)
         time_string = ""
@@ -37,8 +37,9 @@ def search_query(query):
         )
         valid_url = url_pattern.match(data["link"])
         if valid_url is None:
-            data["link"] = "null"
-            """big is this cat that he's enormous hip over 7 months old and he's like the size"""
+            res["link"] = "null"
+            # Query that results in top result having an invalid url.
+            # big is this cat that he's enormous hip over 7 months old
         else:
             if not data["link"].startswith("http"):
                 res["link"] = "//" + data["link"]
