@@ -177,7 +177,7 @@ def generate_query(query_string, query_type):
     semantic_boost = 0.9
     num_canditates = 20 #Kan vara mycket större
 
-    
+
     #confidence_boost = 1
     #title_boost = 0.1
     auto = True #Ta bort 
@@ -275,138 +275,116 @@ def generate_query(query_string, query_type):
                     }
                 }
             }
+        else:
         
-        #Börja med att kolla om querien innehåller något specialtecken - isf kör special
-        """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
-        print(type(query_string))
-        string_list = query_string.split(" ") #Kanske strunta i
-        for string in string_list:
-            print(string)
-            spelling_query = {
-                "query": { 
-                    "match": {"transcript": string}
-                }
-            }
-            
-            res = client.search(index = INDEX, body = spelling_query, size= 50)
-            #print(res)
-            print(res['hits']['total']['value'])
-            if res['hits']['total']['value'] == 0:
-                #Sätt query_string till_chat-gpt
-                #Bryt
-                print("hi there")
-                messages.append(
-                    {"role": "user", "content": query_string},
-                )
-                #Lägga till temperatur = 0.1?
-                chat = chat_client.chat.completions.create(
-                    messages = messages,
-                
-                
-                    model="gpt-3.5-turbo",
-                )
-                query_string = chat.choices[0].message.content
-                print(f"ChatGPT: {query_string}")
-                messages.append({"role": "assistant", "content": query_string})
-
-                break
-            #på vilken form skickas denna tillbaka? Hur kolla längden?
-            #Hitta " " och parsea
-        query = {
-            "query": {
-                "match": {"transcript": query_string}
-            }
-        }
-
-        #Kan välja om vi ska kolla kolla allt med chat-gpt eller om vi ska kolla allt här först
-
-        """query = { #Vill söka i titel här
-        "query":{
-            "match": {"transcript": {
-                "query": query_string,
-                "boost": 0.1}
-                      },
-            
-            #"match": {"title" : query_string} #Skulle vilja ha tillgång till titel för att kunna söka på det
-        },
-        "knn":{
-                    "field": "vector",  # Field containing the vectors
-                    "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search
-                    "k": 10,
-                    "num_candidates": 11,
-                    "boost": 2.0
-            
-            },
-            "_source": ["id", "transcript"],
-        
-        }"""
-        print("där")
-        cl.IndicesClient(client).refresh()
-        print("här")
-
-        tokens = get_tokens(query_string)
-        must_occur_list = [{"term": {"transcript": token}} for token in tokens]
-            
-
-        embeddings = model.encode("search_query: " + query_string, convert_to_tensor=True) #Nyhet
-        embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[0],)) #Nyhet
-        embeddings = embeddings[:matryoshka_dim] #Nyhet
-        vector = F.normalize(embeddings, p=2, dim=0) #Nyhet
-        query = { #Vill söka i titel här
-        
-        "query": {
-                "bool": {
-                    "should": [
-                        { 
-                            "match": {
-                                "transcript": {
-                                    "query": query_string,
-                                    "boost": union_boost
-                                }
-                            }
-                        },
-                        {
-                            "match_phrase": {
-                                "transcript": {
-                                    "query": query_string,
-                                    "boost": phrase_boost
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must": must_occur_list,
-                                "boost": intersection_boost
+            #Börja med att kolla om querien innehåller något specialtecken - isf kör special
+            """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
+            print(type(query_string))
+            string_list = query_string.split(" ") #Kanske strunta i
+            for string in string_list:
+                print(string)
+                spelling_query = {
+                    "query": { 
+                        "match": {"transcript": string}
                     }
-                },
-                            
-                    ],
-                    
-                },
+                }
                 
-            },
-            "knn":{
-                    "field": "vector",  # Field containing the vectors
-                    "query_vector": vector.tolist(),  # Vector for similarity search, kanske ska vara .toList()
-                    "k": 10,
-                    "num_candidates": 20,
-                    "boost": semantic_boost
+                res = client.search(index = INDEX, body = spelling_query, size= 50)
+                #print(res)
+                print(res['hits']['total']['value'])
+                if res['hits']['total']['value'] == 0:
+                    #Sätt query_string till_chat-gpt
+                    #Bryt
+                    print("hi there")
+                    messages.append(
+                        {"role": "user", "content": query_string},
+                    )
+                    #Lägga till temperatur = 0.1?
+                    chat = chat_client.chat.completions.create(
+                        messages = messages,
                     
-            
-            },
-            "_source": ["show_id", "transcript"],
-        
-        }
-        now = datetime.now()
-        print("hej")
-        now = datetime.now()
-        response = client.search(index = INDEX, body = query, size = 10, request_timeout = 10000)
-        print(response['hits']['total']['value'])
-        print(datetime.now()-now)
+                    
+                        model="gpt-3.5-turbo",
+                    )
+                    query_string = chat.choices[0].message.content
+                    print(f"ChatGPT: {query_string}")
+                    messages.append({"role": "assistant", "content": query_string})
 
-        
-        #client.knn_search(index = INDEX, body = query, )
-        print("tjolahopp")
+                    break
+                #på vilken form skickas denna tillbaka? Hur kolla längden?
+                #Hitta " " och parsea
+            """query = {
+                "query": {
+                    "match": {"transcript": query_string}
+                }
+            }"""
+            print("där")
+            cl.IndicesClient(client).refresh()
+            print("här")
+
+            tokens = get_tokens(query_string)
+            must_occur_list = [{"term": {"transcript": token}} for token in tokens]
+                
+
+            embeddings = model.encode("search_query: " + query_string, convert_to_tensor=True) #Nyhet
+            embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[0],)) #Nyhet
+            embeddings = embeddings[:matryoshka_dim] #Nyhet
+            vector = F.normalize(embeddings, p=2, dim=0) #Nyhet
+            query = { #Vill söka i titel här
+            
+            "query": {
+                    "bool": {
+                        "should": [
+                            { 
+                                "match": {
+                                    "transcript": {
+                                        "query": query_string,
+                                        "boost": union_boost
+                                    }
+                                }
+                            },
+                            {
+                                "match_phrase": {
+                                    "transcript": {
+                                        "query": query_string,
+                                        "boost": phrase_boost
+                                    }
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "must": must_occur_list,
+                                    "boost": intersection_boost
+                        }
+                    },
+                                
+                        ],
+                        
+                    },
+                    
+                },
+                "knn":{
+                        "field": "vector",  # Field containing the vectors
+                        "query_vector": vector.tolist(),  # Vector for similarity search, kanske ska vara .toList()
+                        "k": 10,
+                        "num_candidates": num_canditates,
+                        "boost": semantic_boost
+                        
+                
+                },
+                "_source": ["show_id", "transcript"],
+            
+            }
+            now = datetime.now()
+            print("hej")
+            now = datetime.now()
+            response = client.search(index = INDEX, body = query, size = 10, request_timeout = 10000)
+            print(response['hits']['total']['value'])
+            print(datetime.now()-now)
+
+            
+            #client.knn_search(index = INDEX, body = query, )
+            print("tjolahopp")
     elif query_type == QueryType.new:
         if check_char(query_string) == True:
             words = query_string.split(" ")
