@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer
 from datetime import datetime
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
+import torch.nn.functional as F
 
 # Filter out the specific warning about insecure HTTPS requests
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
@@ -26,10 +27,21 @@ chat_client = openai.OpenAI(
 )
 messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
 
-sentences = ["This is an example sentence", "Each sentence is converted"]
+"""sentences = ["This is an example sentence", "Each sentence is converted"]
 
-model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-embeddings = model.encode(sentences)
+model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')"""
+
+matryoshka_dim = 256 #Nyhet
+
+model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True) #Nyhet
+sentences = ['search_query: What is TSNE?', 'search_query: Who is Laurens van der Maaten?']
+"""Följande är bara nyheter för testet, men det visar flera vektorer i samma embeddings"""
+embeddings = model.encode(sentences, convert_to_tensor=True) #Nyhet
+embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[1],)) #Nyhet
+embeddings = embeddings[:, :matryoshka_dim] #Nyhet
+embeddings = F.normalize(embeddings, p=2, dim=1) #Nyhet
+
+#embeddings = model.encode(sentences)
 print("hi")
 print(embeddings)
 
@@ -158,15 +170,21 @@ def get_transcript_metadata(results):
 
 
 def generate_query(query_string, query_type):
+    """Här är värdena som går att ändra"""
     intersection_boost = 0
     phrase_boost = 0.6
     union_boost = 0.2
     semantic_boost = 0.9
-    confidence_boost = 1
-    title_boost = 0.1
-    auto = True
-    window_size = 20
-    rank_constant = 10
+    num_canditates = 20 #Kan vara mycket större
+
+    
+    #confidence_boost = 1
+    #title_boost = 0.1
+    auto = True #Ta bort 
+    window_size = 20 #Ta bort
+    rank_constant = 10 #Ta bort
+    
+    k = 10 #Behöver inte ha denna i GUI
 
     if query_type == QueryType.smart_query:
         #Vill börja med att kolla om den innehåller något tecken, isf gör det här
@@ -227,6 +245,36 @@ def generate_query(query_string, query_type):
             }
         }
     elif query_type == QueryType.combi_query:
+        if check_char(query_string) == True:
+            words = query_string.split(" ")
+            words = [x for x in words if len(x) != 0]
+            must_occur_words = [x[1:] for x in words if x[0] == "+"]
+            must_occur_tokens = get_tokens(" ".join(must_occur_words))
+            must_occur_list = [{"term": {"transcript": token}} for token in must_occur_tokens]
+
+            must_not_occur_words = [x[1:] for x in words if x[0] == "-"]
+            must_not_occur_tokens = get_tokens(" ".join(must_not_occur_words))
+            must_not_occur_list = [{"term": {"transcript": token}} for token in must_not_occur_tokens]
+
+            phrases = re.findall("""["']([^"]*)["']""", query_string)
+            phases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
+            must_occur_list.extend(phases_list)
+
+            should_occur_words = [x for x in words if
+                                x not in must_occur_words and x not in must_not_occur_words and x not in " ".join(
+                                    phrases)]
+            should_occur_tokens = get_tokens(" ".join(should_occur_words))
+            should_occur_list = [{"term": {"transcript": token}} for token in should_occur_tokens]
+
+            query = {
+                "query": {
+                    "bool": {
+                        "must": must_occur_list,
+                        "must_not": must_not_occur_list,
+                        "should": should_occur_list
+                    }
+                }
+            }
         
         #Börja med att kolla om querien innehåller något specialtecken - isf kör special
         """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
@@ -263,6 +311,7 @@ def generate_query(query_string, query_type):
 
                 break
             #på vilken form skickas denna tillbaka? Hur kolla längden?
+            #Hitta " " och parsea
         query = {
             "query": {
                 "match": {"transcript": query_string}
@@ -294,13 +343,54 @@ def generate_query(query_string, query_type):
         print("där")
         cl.IndicesClient(client).refresh()
         print("här")
+
+        tokens = get_tokens(query_string)
+        must_occur_list = [{"term": {"transcript": token}} for token in tokens]
+            
+
+        embeddings = model.encode("search_query: " + query_string, convert_to_tensor=True) #Nyhet
+        embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[0],)) #Nyhet
+        embeddings = embeddings[:matryoshka_dim] #Nyhet
+        vector = F.normalize(embeddings, p=2, dim=0) #Nyhet
         query = { #Vill söka i titel här
         
-        "knn":{
+        "query": {
+                "bool": {
+                    "should": [
+                        { 
+                            "match": {
+                                "transcript": {
+                                    "query": query_string,
+                                    "boost": union_boost
+                                }
+                            }
+                        },
+                        {
+                            "match_phrase": {
+                                "transcript": {
+                                    "query": query_string,
+                                    "boost": phrase_boost
+                                }
+                            }
+                        },
+                        {
+                            "bool": {
+                                "must": must_occur_list,
+                                "boost": intersection_boost
+                    }
+                },
+                            
+                    ],
+                    
+                },
+                
+            },
+            "knn":{
                     "field": "vector",  # Field containing the vectors
-                    "query_vector": model.encode(query_string).tolist(),  # Vector for similarity search, kanske ska vara .toList()
+                    "query_vector": vector.tolist(),  # Vector for similarity search, kanske ska vara .toList()
                     "k": 10,
                     "num_candidates": 20,
+                    "boost": semantic_boost
                     
             
             },
