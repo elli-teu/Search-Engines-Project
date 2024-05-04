@@ -38,12 +38,12 @@
       <div class="v1_12">
         {% for result in results %}
         <div class="result-box">
-          {% if result.link and result.link != "null" %}
-            <a href="{{ result.link }}" target="{{ result.link }}">
+          {% if result.pod_link and result.pod_link != "null" %}
+            <a href="{{ result.pod_link }}" target="{{ result.pod_link }}">
               <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
             </a>
             <h3>
-              <a href="{{ result.link }}" target="{{ result.link }}">
+              <a href="{{ result.pod_link }}" target="{{ result.pod_link }}">
                 {{ result.podcast_name }}
               </a>
             </h3>

@@ -17,6 +17,8 @@ def search_query(query):
         res["episode_name"] = data["episode_name"]
         res["episode_description"] = data["episode_description"]
         res["image"] = data["image"]
+        res["audio_link"] = data["audio_link"]
+        res["pod_link"] = data["pod_link"]
 
         m, s = divmod(res["starttime"], 60)
         h, m = divmod(m, 60)
@@ -35,16 +37,16 @@ def search_query(query):
             r'(?:/?|[/?]\S+)$',  # Optional path
             re.IGNORECASE
         )
-        valid_url = url_pattern.match(data["link"])
+        valid_url = url_pattern.match(data["pod_link"])
         if valid_url is None:
-            res["link"] = "null"
+            res["pod_link"] = "null"
             # Query that results in top result having an invalid url.
             # big is this cat that he's enormous hip over 7 months old
         else:
-            if not data["link"].startswith("http"):
-                res["link"] = "//" + data["link"]
+            if not data["pod_link"].startswith("http"):
+                res["pod_link"] = "//" + data["pod_link"]
             else:
-                res["link"] = data["link"]
+                res["pod_link"] = data["pod_link"]
 
     return results
 

@@ -88,9 +88,15 @@ def get_transcript_metadata(results):
                 this_metadata["episode_description"] = episode["episode_description"]
             else:
                 this_metadata["episode_description"] = "null"
+
+            if "audio_link" in episode:
+                this_metadata["audio_link"] = episode["audio_link"]
+            else:
+                this_metadata["audio_link"] = "null"
         else:
             this_metadata["episode_name"] = "null"
             this_metadata["episode_description"] = "null"
+            this_metadata["audio_link"] = "null"
 
         if show_response["found"]:
             show = show_response["_source"]
@@ -119,12 +125,18 @@ def get_transcript_metadata(results):
             else:
                 this_metadata["image"] = "null"
 
+            if "pod_link" in show:
+                this_metadata["pod_link"] = show["pod_link"]
+            else:
+                this_metadata["pod_link"] = "null"
+
         else:
             this_metadata["podcast_name"] = "null"
             this_metadata["podcast_description"] = "null"
             this_metadata["publisher"] = "null"
             this_metadata["link"] = "null"
             this_metadata["image"] = "null"
+            this_metadata["pod_link"] = "null"
 
         metadata.append(this_metadata)
 
