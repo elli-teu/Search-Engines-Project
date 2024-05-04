@@ -143,7 +143,7 @@ def generate_query(query_string, query_type):
         must_not_occur_tokens = get_tokens(" ".join(must_not_occur_words))
         must_not_occur_list = [{"term": {"transcript": token}} for token in must_not_occur_tokens]
 
-        phrases = re.findall("""["']([^"]*)["']""", query_string)
+        phrases = re.findall("""["]([^"]*)["]""", query_string)
         phases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
         must_occur_list.extend(phases_list)
 
@@ -192,7 +192,6 @@ def generate_query(query_string, query_type):
 
 
 def execute_query(query, n=10, index=INDEX):
-    # TODO: This results in 0 results if the query is too long.
     return client.search(index=index, body=query, size=n)
 
 

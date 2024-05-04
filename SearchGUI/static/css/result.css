@@ -81,7 +81,6 @@ body {
 .v1_12 {
   width: 50%;
   height: auto;
-  background: url("../images/v1_12.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -599,7 +598,6 @@ body {
   .v1_12 {
     width: 100%;
     height: auto;
-    background: url("../images/v1_12.png");
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;

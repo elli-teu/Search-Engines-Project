@@ -29,3 +29,5 @@ __pycache__/
 *.pyc
 *.xml
 *.idea*
+SearchGui/setup.py
+SearchGui/wsgi.py
