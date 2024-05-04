@@ -38,13 +38,14 @@
       <div class="v1_12">
         {% for result in results %}
         <div class="result-box">
-        {% if result.image and result.image != "null" %}
-            <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
-        {% else %}
-            <img class="img" src="static/images/search_icon.png" alt="Placeholder Image" height="100" width="100" />
-        {% endif %}
+          {% if result.image and result.image != "null" %}
+              <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
+          {% else %}
+              <img class="img" src="static/images/search_icon.png" alt="Placeholder Image" height="100" width="100" />
+          {% endif %}
           <h3>{{ result.podcast_name }}</h3>
-          <p class="description">{{ result.podcast_description }}</p>
+          <p class="description overflow-hidden">{{ result.podcast_description }}</p>
+          <a href="#" class="show-more">Show more</a>
           {% if result.link and result.link != "null" %}
           <a href="{{ result.link }}" target="{{ result.link }}"
             >Podcast link</a
@@ -64,8 +65,8 @@
       </div>
       <form action="/result" method="post" onsubmit="return validateForm(this.query.value)">
         <div class="v3_35-container">
-          {% if query != "" %}
-            <input class="v3_35" name="query" value = {{ query }}  placeholder="Enter your search query">
+          {% if old_query != "" %}
+            <input class="v3_35" name="query" value="{{ old_query }}"  placeholder="Enter your search query">
           {% else %}
             <input class="v3_35" name="query" value = "" placeholder="Enter your search query">
           {% endif %}
@@ -76,9 +77,9 @@
       </form>
       <div class="name"></div>
       <div class="v1_48">
-        <div class="v1_9"></div>
         <form action="/" method="get">
           <button class="v1_7 transparent-button">PodysseyCast</button>
+          <button class="v1_9 transparent-button"></button>
         </form>
       </div>
     </div>

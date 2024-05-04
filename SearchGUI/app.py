@@ -52,12 +52,12 @@ def search_query(query):
 @app.route('/result', methods=['POST', 'GET'])
 def result():
     if request.method == 'GET':
-        return render_template('result.html', results=[], query="")
+        return render_template('result.html', results=[], old_query="")
 
     query = request.form['query']
 
     results = search_query(query)
-    return render_template('result.html', results=results, query=query)
+    return render_template('result.html', results=results, old_query=query)
 
 
 @app.route('/')

@@ -192,7 +192,7 @@ def generate_query(query_string, query_type):
 
 
 def execute_query(query, n=10, index=INDEX):
-    return client.search(index=index, body=query, size=n)
+    return client.search(index=index, body=query, size=n, source=["show_id", "transcript", "starttime", "endtime"])
 
 
 def delete_index(index_name):

@@ -29,6 +29,7 @@ body {
   border-bottom-left-radius: 15px;
   border-bottom-right-radius: 15px;
   overflow: hidden;
+  outline: none;
 }
 .v3_7 {
   width: 1px;

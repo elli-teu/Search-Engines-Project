@@ -509,6 +509,7 @@ body {
   border-bottom-left-radius: 15px;
   border-bottom-right-radius: 15px;
   overflow: hidden;
+  outline: none;
 }
 .name {
   color: #fff;
@@ -629,6 +630,7 @@ body {
     border-bottom-right-radius: 15px;
     overflow: hidden;
     font-size: 1.7em;
+    outline: none;
   }
   .v1_48 {
     width: 100%;
