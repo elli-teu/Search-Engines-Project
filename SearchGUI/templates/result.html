@@ -62,13 +62,13 @@
         </div>
         {% endfor %}
       </div>
-      <form action="/result" method="post">
+      <form action="/result" method="post" onsubmit="return validateForm(this.query.value)">
         <div class="v3_35-container">
-          <input
-            class="v3_35"
-            name="query"
-            placeholder="Enter your search query"
-          />
+          {% if query != "" %}
+            <input class="v3_35" name="query" value = {{ query }}  placeholder="Enter your search query">
+          {% else %}
+            <input class="v3_35" name="query" value = "" placeholder="Enter your search query">
+          {% endif %}
           <button class="search-button">
             <img src="static/images/search_icon.png" class="search-image" />
           </button>
@@ -109,6 +109,15 @@
           });
         });
       });
+
     </script>
   </body>
+<script>
+  function validateForm(query) {
+    if (query.trim() === '') {
+      return false;
+    }
+    return true;
+  }
+</script>
 </html>
