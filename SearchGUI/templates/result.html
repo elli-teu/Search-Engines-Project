@@ -38,19 +38,22 @@
       <div class="v1_12">
         {% for result in results %}
         <div class="result-box">
-          {% if result.image and result.image != "null" %}
+          {% if result.link and result.link != "null" %}
+            <a href="{{ result.link }}" target="{{ result.link }}">
               <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
+            </a>
+            <h3>
+              <a href="{{ result.link }}" target="{{ result.link }}">
+                {{ result.podcast_name }}
+              </a>
+            </h3>
           {% else %}
-              <img class="img" src="static/images/search_icon.png" alt="Placeholder Image" height="100" width="100" />
+            <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
+            <h3>{{ result.podcast_name }}</h3>
           {% endif %}
-          <h3>{{ result.podcast_name }}</h3>
+
           <p class="description overflow-hidden">{{ result.podcast_description }}</p>
           <a href="#" class="show-more">Show more</a>
-          {% if result.link and result.link != "null" %}
-          <a href="{{ result.link }}" target="{{ result.link }}"
-            >Podcast link</a
-          >
-          {% endif %}
           <h3>{{ result.episode_name}}</h3>
           <p class="description overflow-hidden">
             {{ result.episode_description }}
