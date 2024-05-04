@@ -66,7 +66,8 @@
         </div>
         {% endfor %}
       </div>
-      <form action="/result" method="post" onsubmit="return validateForm(this.query.value)">
+      <form id="searchForm" action="/result" method="post" onsubmit="return validateForm(this.query.value)">
+
         <div class="v3_35-container">
           {% if old_query != "" %}
             <input class="v3_35" name="query" value="{{ old_query }}"  placeholder="Enter your search query">
@@ -77,7 +78,15 @@
             <img src="static/images/search_icon.png" class="search-image" />
           </button>
         </div>
+        <div class="dropdown-content" id="dropdownContent">
+          <!-- This div will be populated with sliders when the dropdown is clicked -->
+        </div>
       </form>
+
+      <div class="dropdown">
+        <button class="dropdown-btn">Advanced Options</button>
+      </div>
+
       <div class="name"></div>
       <div class="v1_48">
         <form action="/" method="get">
@@ -123,5 +132,36 @@
     }
     return true;
   }
+</script>
+
+<script>
+  // Function to generate sliders
+  function generateSliders() {
+    var dropdownContent = document.getElementById('dropdownContent');
+
+    var sliders = dropdownContent.getElementsByClassName('advanced-slider');
+
+    if (sliders.length > 0){
+      dropdownContent.innerHTML = ''; // Clear existing content
+    }
+    else{
+      // Generate five sliders
+      for (var i = 1; i <= 5; i++) {
+        var slider = document.createElement('input');
+        slider.className = "advanced-slider";
+        slider.type = 'range';
+        slider.name = "slider" + i.toString();
+        slider.min = 0;
+        slider.max = 100;
+        slider.value = 50; // Initial value
+        dropdownContent.appendChild(slider);
+        }
+    }
+  }
+
+  // Add event listener to dropdown button
+  document.querySelector('.dropdown-btn').addEventListener('click', function() {
+    generateSliders();
+  });
 </script>
 </html>

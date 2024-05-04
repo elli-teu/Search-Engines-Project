@@ -594,6 +594,39 @@ body {
   box-sizing: border-box; /* Include padding in the element's total width and height */
 }
 
+.dropdown {
+  position: absolute; /* Set position to absolute */
+  top: 10%; /* Align to the top */
+  left: 100px; /* Align to the right */
+  height: 100px; /* Occupy full height of the container */
+  padding-right: 10px; /* Add padding to create space between the image and the input */
+}
+
+.dropdown-btn {
+  position: absolute; /* Set position to absolute */
+  top: 10%; /* Align to the top */
+  left: 100px; /* Align to the right */
+  height: 100px; /* Occupy full height of the container */
+  padding-right: 10px; /* Add padding to create space between the image and the input */
+}
+
+.dropdown-content {
+  position: absolute; /* Set position to absolute */
+  top: 10%; /* Align to the top */
+  left: 100px; /* Align to the right */
+  height: 100px; /* Occupy full height of the container */
+  padding-right: 10px; /* Add padding to create space between the image and the input */
+}
+
+.advanced-slider {
+  position: relative; /* Set position to absolute */
+  top: 100%; /* Align to the top */
+  left: 0%; /* Align to the right */
+  height: 20px; /* Occupy full height of the container */
+  display: block; /* Display sliders below one another */
+  margin-bottom: 10px; /* Add some space between sliders */
+}
+
 /* phone stuff */
 @media (max-width: 1000px) {
   .v1_12 {

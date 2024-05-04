@@ -58,6 +58,15 @@ def result():
 
     query = request.form['query']
 
+    slider_names = ["slider" + str(i+1) for i in range(5)]
+    sliders_found = True
+    for slider in slider_names:
+        if slider not in request.form:
+            sliders_found = False
+
+    if sliders_found:
+        for i, slider in enumerate(slider_names):
+            print(f"Value of slider {i+1}: {request.form[slider]}")
     results = search_query(query)
     return render_template('result.html', results=results, old_query=query)
 
