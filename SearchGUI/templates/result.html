@@ -84,7 +84,6 @@
       </form>
 
       <button class="dropdown" onclick="generateSliders({{ sliderPositions }})">Advanced Options</button>
-
       <div class="name"></div>
       <div class="v1_48">
         <form action="/" method="get">
@@ -163,4 +162,7 @@
     }
   }
 </script>
+{% if showSliders %}
+  <script>generateSliders({{ sliderPositions|tojson }})</script>
+{% endif %}
 </html>

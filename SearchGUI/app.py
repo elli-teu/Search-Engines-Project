@@ -55,7 +55,8 @@ def search_query(query):
 def result():
     default_sliders = ["0" for _ in range(5)]
     if request.method == 'GET':
-        return render_template('result.html', results=[], old_query="", sliderPositions=default_sliders)
+        return render_template('result.html', results=[], old_query="", sliderPositions=default_sliders,
+                               showSliders=False)
 
     query = request.form['query']
 
@@ -73,7 +74,8 @@ def result():
             slider_values.append(request.form[slider])
 
     results = search_query(query)
-    return render_template('result.html', results=results, old_query=query, sliderPositions=slider_values)
+    return render_template('result.html', results=results, old_query=query, sliderPositions=slider_values,
+                           showSliders=slider_values != default_sliders)
 
 
 @app.route('/')
