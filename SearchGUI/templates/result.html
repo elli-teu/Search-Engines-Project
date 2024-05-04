@@ -78,14 +78,12 @@
             <img src="static/images/search_icon.png" class="search-image" />
           </button>
         </div>
-        <div class="dropdown-content" id="dropdownContent">
+        <div class="dropdown" id="dropdownContent">
           <!-- This div will be populated with sliders when the dropdown is clicked -->
         </div>
       </form>
 
-      <div class="dropdown">
-        <button class="dropdown-btn">Advanced Options</button>
-      </div>
+      <button class="dropdown" onclick="generateSliders({{ sliderPositions }})">Advanced Options</button>
 
       <div class="name"></div>
       <div class="v1_48">
@@ -136,32 +134,33 @@
 
 <script>
   // Function to generate sliders
-  function generateSliders() {
+  function generateSliders(initialValues) {
     var dropdownContent = document.getElementById('dropdownContent');
 
     var sliders = dropdownContent.getElementsByClassName('advanced-slider');
-
     if (sliders.length > 0){
-      dropdownContent.innerHTML = ''; // Clear existing content
+      while (sliders[0]) {
+        sliders[0].parentNode.removeChild(sliders[0]);
+      }
     }
     else{
       // Generate five sliders
       for (var i = 1; i <= 5; i++) {
+        var sliderContainer = document.createElement('div');
+        sliderContainer.className = "advanced-slider";
+        var sliderTitle = document.createElement('p');
+        sliderTitle.textContent = "Slider " + i.toString();
+        sliderContainer.appendChild(sliderTitle);
         var slider = document.createElement('input');
-        slider.className = "advanced-slider";
         slider.type = 'range';
         slider.name = "slider" + i.toString();
         slider.min = 0;
         slider.max = 100;
-        slider.value = 50; // Initial value
-        dropdownContent.appendChild(slider);
+        slider.value = initialValues[i-1];
+        sliderContainer.appendChild(slider);
+        dropdownContent.appendChild(sliderContainer);
         }
     }
   }
-
-  // Add event listener to dropdown button
-  document.querySelector('.dropdown-btn').addEventListener('click', function() {
-    generateSliders();
-  });
 </script>
 </html>

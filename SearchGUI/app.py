@@ -53,8 +53,9 @@ def search_query(query):
 
 @app.route('/result', methods=['POST', 'GET'])
 def result():
+    default_sliders = ["0" for _ in range(5)]
     if request.method == 'GET':
-        return render_template('result.html', results=[], old_query="")
+        return render_template('result.html', results=[], old_query="", sliderPositions=default_sliders)
 
     query = request.form['query']
 
@@ -64,11 +65,15 @@ def result():
         if slider not in request.form:
             sliders_found = False
 
-    if sliders_found:
+    if not sliders_found:
+        slider_values = default_sliders
+    else:
+        slider_values = []
         for i, slider in enumerate(slider_names):
-            print(f"Value of slider {i+1}: {request.form[slider]}")
+            slider_values.append(request.form[slider])
+
     results = search_query(query)
-    return render_template('result.html', results=results, old_query=query)
+    return render_template('result.html', results=results, old_query=query, sliderPositions=slider_values)
 
 
 @app.route('/')
