@@ -77,7 +77,10 @@ def result():
         for i, slider in enumerate(slider_names):
             slider_values.append(request.form[slider])
             normalized_sliders.append(int(request.form[slider]) / 100)
-    query_type = request.form['query_type']
+    try:
+        query_type = request.form['query_type']
+    except KeyError:
+        query_type = "smart"
     results = search_query(query, query_type, normalized_sliders)
     return render_template('result.html', results=results, old_query=query, sliderPositions=slider_values,
                            showSliders=slider_values != default_sliders,
