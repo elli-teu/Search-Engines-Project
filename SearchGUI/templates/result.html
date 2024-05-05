@@ -80,10 +80,12 @@
         </div>
         <div class="dropdown" id="dropdownContent">
           <!-- This div will be populated with sliders when the dropdown is clicked -->
+          <div class="radio-container" id="radioContainer">
+            <!-- Radio buttons will be added here -->
+          </div>
         </div>
       </form>
-
-      <button class="dropdown" onclick="generateSliders({{ sliderPositions }})">Advanced Options</button>
+      <button class="dropdown" onclick="generateSliders({{ sliderPositions}}, {{ searchOptions }}, {{ searchOptionNames }})">Advanced Options</button>
       <div class="name"></div>
       <div class="v1_48">
         <form action="/" method="get">
@@ -133,13 +135,20 @@
 
 <script>
   // Function to generate sliders
-  function generateSliders(initialValues) {
+  function generateSliders(initialValues, options, queryNames) {
     var dropdownContent = document.getElementById('dropdownContent');
-
+    sliderNames = ["Intersection boost", "Phrase boost", "Union boost", "Semantic boost", "Confidence boost"]
     var sliders = dropdownContent.getElementsByClassName('advanced-slider');
     if (sliders.length > 0){
       while (sliders[0]) {
         sliders[0].parentNode.removeChild(sliders[0]);
+      }
+    }
+
+    var radioButtons = dropdownContent.getElementsByClassName('radio-button');
+    if (radioButtons.length > 0){
+      while (radioButtons[0]) {
+        radioButtons[0].parentNode.removeChild(radioButtons[0]);
       }
     }
     else{
@@ -148,21 +157,41 @@
         var sliderContainer = document.createElement('div');
         sliderContainer.className = "advanced-slider";
         var sliderTitle = document.createElement('p');
-        sliderTitle.textContent = "Slider " + i.toString();
+        sliderTitle.textContent = sliderNames[i-1];
         sliderContainer.appendChild(sliderTitle);
         var slider = document.createElement('input');
         slider.type = 'range';
-        slider.name = "slider" + i.toString();
+        slider.name = sliderNames[i-1];
         slider.min = 0;
         slider.max = 100;
         slider.value = initialValues[i-1];
         sliderContainer.appendChild(slider);
         dropdownContent.appendChild(sliderContainer);
         }
+
+
+      for (var i = 0; i < options.length; i++) {
+        var radioContainer = document.createElement('div');
+        radioContainer.className = "radio-button";
+        var radioInput = document.createElement('input');
+        radioInput.type = "radio";
+        radioInput.name = "query_type";
+        radioInput.value = options[i];
+        if (i == 0) {
+          radioInput.checked = true;
+        }
+        var radioTitle = document.createElement('span'); // Use <span> instead of <p> for inline elements
+        radioTitle.textContent = queryNames[i];
+
+        radioContainer.appendChild(radioInput);
+        radioContainer.appendChild(radioTitle);
+        dropdownContent.appendChild(radioContainer);
+      }
+
     }
   }
 </script>
 {% if showSliders %}
-  <script>generateSliders({{ sliderPositions|tojson }})</script>
+  <script>generateSliders({{ sliderPositions|tojson }}, {{ searchOptions|tojson }}, {{ searchOptionNames|tojson }})</script>
 {% endif %}
 </html>

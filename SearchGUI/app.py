@@ -4,8 +4,8 @@ import re
 app = Flask(__name__)
 
 
-def search_query(query):
-    query = search.generate_query(query, search.QueryType.smart_query)
+def search_query(query, query_type, slider_values):
+    query = search.generate_query(query, query_type, slider_values)
     query_response = search.execute_query(query, n=50)
     results = search.get_first_n_results(query_response, n=50)
     metadata = search.get_transcript_metadata(results)
@@ -53,10 +53,13 @@ def search_query(query):
 
 @app.route('/result', methods=['POST', 'GET'])
 def result():
-    default_sliders = ["0" for _ in range(5)]
+    default_sliders = ["0", "60", "20", "90", "100"]
+    query_names = ['Smart query', 'Combination query']
     if request.method == 'GET':
         return render_template('result.html', results=[], old_query="", sliderPositions=default_sliders,
-                               showSliders=False)
+                               showSliders=False,
+                               searchOptions=[search.QueryType.smart_query, search.QueryType.combi_query],
+                               searchOptionNames=query_names)
 
     query = request.form['query']
 
@@ -65,17 +68,21 @@ def result():
     for slider in slider_names:
         if slider not in request.form:
             sliders_found = False
-
+    normalized_sliders = []
     if not sliders_found:
         slider_values = default_sliders
+        normalized_sliders = default_sliders
     else:
         slider_values = []
         for i, slider in enumerate(slider_names):
             slider_values.append(request.form[slider])
-
-    results = search_query(query)
+            normalized_sliders.append(int(request.form[slider]) / 100)
+    query_type = request.form['query_type']
+    results = search_query(query, query_type, normalized_sliders)
     return render_template('result.html', results=results, old_query=query, sliderPositions=slider_values,
-                           showSliders=slider_values != default_sliders)
+                           showSliders=slider_values != default_sliders,
+                           searchOptions=[search.QueryType.smart_query, search.QueryType.combi_query],
+                           searchOptionNames=query_names)
 
 
 @app.route('/')

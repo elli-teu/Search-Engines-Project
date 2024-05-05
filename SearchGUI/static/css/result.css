@@ -612,6 +612,11 @@ body {
   margin-bottom: 0px; /* Adjust the bottom margin of the paragraph */
 }
 
+.radio-button {
+    margin-top: 10px;
+    align-items: center;
+}
+
 /* phone stuff */
 @media (max-width: 1000px) {
   .v1_12 {
