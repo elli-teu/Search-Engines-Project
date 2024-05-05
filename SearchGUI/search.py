@@ -22,7 +22,7 @@ chat_client = openai.OpenAI(
     # This is the default and can be omitted
     api_key='sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ',
 )
-messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
+messages = [ {"role": "system", "content":"Correct any spelling mistakes"} ] #För att initialisera gpt
 
 """sentences = ["This is an example sentence", "Each sentence is converted"]
 model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')"""
