@@ -14,6 +14,8 @@ from urllib3.exceptions import InsecureRequestWarning
 # Filter out the specific warning about insecure HTTPS requests
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
+# Initialize Elasticsearch client
+client = Elasticsearch(ADDRESS, api_key=API_KEY, verify_certs=False)
 
 #API KEY
 """sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ"""
@@ -30,14 +32,6 @@ model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')"""
 matryoshka_dim = 256 #Nyhet
 
 model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True) #Nyhet
-sentences = ['search_query: What is TSNE?', 'search_query: Who is Laurens van der Maaten?']
-"""Följande är bara nyheter för testet, men det visar flera vektorer i samma embeddings"""
-embeddings = model.encode(sentences, convert_to_tensor=True) #Nyhet
-embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[1],)) #Nyhet
-embeddings = embeddings[:, :matryoshka_dim] #Nyhet
-embeddings = F.normalize(embeddings, p=2, dim=1) #Nyhet
-
-#embeddings = model.encode(sentences)
 
 
 class QueryType:
@@ -496,7 +490,3 @@ def get_tokens(text):
     # Extract and print the tokens
     tokens = [token['token'] for token in response['tokens']]
     return tokens
-
-
-# Initialize Elasticsearch client
-client = Elasticsearch(ADDRESS, api_key=API_KEY, verify_certs=False)
