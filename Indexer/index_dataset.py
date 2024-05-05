@@ -87,6 +87,8 @@ def index_transcripts_with_metadata_from_folder(folder_path, index_name, episode
     return True
 
 def index_file(root, file_name, metadata_df, model, transcript_index_name, episode_index_name, show_index_name, transcript_length):
+    ## TODO: Add the code from fix_show_links.py to include links to podcast and audio
+    ## This was not included here because this was added after indexing of the data
     actions = []
     actions_episodes = []
     actions_shows = []
