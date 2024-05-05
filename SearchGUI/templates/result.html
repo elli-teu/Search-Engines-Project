@@ -85,7 +85,7 @@
           </div>
         </div>
       </form>
-      <button class="dropdown" onclick="generateSliders({{ sliderPositions}}, {{ searchOptions }}, {{ searchOptionNames }})">Advanced Options</button>
+      <button class="dropdown" onclick="generateSliders({{ sliderPositions }}, {{ searchOptions }}, {{ searchOptionNames }}, '{{ selectedQueryType }}')">Advanced Options</button>
       <div class="name"></div>
       <div class="v1_48">
         <form action="/" method="get">
@@ -135,7 +135,7 @@
 
 <script>
   // Function to generate sliders
-  function generateSliders(initialValues, options, queryNames) {
+  function generateSliders(initialValues, options, queryNames, selectedQueryType) {
     var dropdownContent = document.getElementById('dropdownContent');
     sliderNames = ["Intersection boost", "Phrase boost", "Union boost", "Semantic boost", "Confidence boost"]
     var sliders = dropdownContent.getElementsByClassName('advanced-slider');
@@ -161,7 +161,7 @@
         sliderContainer.appendChild(sliderTitle);
         var slider = document.createElement('input');
         slider.type = 'range';
-        slider.name = sliderNames[i-1];
+        slider.name = "slider" + i.toString();
         slider.min = 0;
         slider.max = 100;
         slider.value = initialValues[i-1];
@@ -177,7 +177,7 @@
         radioInput.type = "radio";
         radioInput.name = "query_type";
         radioInput.value = options[i];
-        if (i == 0) {
+        if (options[i] == selectedQueryType) {
           radioInput.checked = true;
         }
         var radioTitle = document.createElement('span'); // Use <span> instead of <p> for inline elements
@@ -192,6 +192,8 @@
   }
 </script>
 {% if showSliders %}
-  <script>generateSliders({{ sliderPositions|tojson }}, {{ searchOptions|tojson }}, {{ searchOptionNames|tojson }})</script>
+  <script>
+    generateSliders({{ sliderPositions|tojson }}, {{ searchOptions|tojson }}, {{ searchOptionNames|tojson }}, '{{ selectedQueryType }}')
+  </script>
 {% endif %}
 </html>
