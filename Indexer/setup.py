@@ -53,6 +53,9 @@ episodes_mappings = {
             "episode_name": {
                 "type": "text",
             },
+            "audio_link": {
+                "type": "text",
+            },
             "episode_description": {
                 "type": "text",
                 "fields": {
@@ -75,6 +78,9 @@ shows_mappings = {
                 "type": "text",
             },
             "link": {
+                "type": "text",
+            },
+            "pod_link": {
                 "type": "text",
             },
             "publisher": {
