@@ -6,9 +6,21 @@ app = Flask(__name__)
 
 def search_query(query, query_type, slider_values):
     query = search.generate_query(query, query_type, slider_values)
-    query_response = search.execute_query(query, n=50)
-    results = search.get_first_n_results(query_response, n=50)
-    metadata = search.get_transcript_metadata(results)
+    number_of_responses = 50
+    query_response = search.execute_query(query, n=number_of_responses)
+    results, ids = search.get_first_n_results(query_response, n=number_of_responses)
+    unique_results = []
+    unique_show_ids = []
+    unique_ids = []
+    for res, res_id in zip(results, ids):
+        if res["show_id"] not in unique_show_ids:
+            unique_results.append(res)
+            unique_show_ids.append(res["show_id"])
+            unique_ids.append(res_id)
+
+    results = unique_results
+
+    metadata = search.get_transcript_metadata(results, unique_ids)
     for res, data in zip(results, metadata):
         res["transcript"] = str("...") + res["transcript"] + str("...")
         res["podcast_name"] = data["podcast_name"]
@@ -17,9 +29,8 @@ def search_query(query, query_type, slider_values):
         res["episode_name"] = data["episode_name"]
         res["episode_description"] = data["episode_description"]
         res["image"] = data["image"]
-        res["audio_link"] = data["audio_link"]
+        res["audio_link"] = data["audio_link"] + f"#t={res['starttime']},{res['endtime']}"
         res["pod_link"] = data["pod_link"]
-
         m, s = divmod(res["starttime"], 60)
         h, m = divmod(m, 60)
         time_string = ""

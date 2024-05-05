@@ -694,4 +694,21 @@ body {
     opacity: 1;
     text-align: left;
   }
+
+
+    .dropdown {
+      display: none;
+    }
+
+    .advanced-slider {
+      display: none;
+    }
+
+    .advanced-slider p {
+      display: none;
+    }
+
+    .radio-button {
+        display: none;
+    }
 }

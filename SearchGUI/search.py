@@ -77,31 +77,25 @@ def index_transcripts_from_folder(folder_path, index_name):
             number_of_files += 1
 
 
-def get_transcript_metadata(results):
+def get_transcript_metadata(results, ids):
     if len(results) == 0:
         return []
-    episode_bulk_requests = []
     metadata = []
     shows = []
-    for res in results:
+    episodes = []
+    for res, res_id in zip(results, ids):
         show = res["show_id"]
         shows.append(show)
-        episode_bulk_requests.append({"index": "podcast_episodes"})
-        episode_request = {
-            "query": {
-                "match": {"show": show}
-            }}
-        episode_bulk_requests.append(episode_request)
+        episode = res_id.split("_")[0]
+        episodes.append(episode)
 
-    episode_request = "\n".join([json.dumps(request) for request in episode_bulk_requests])
-    episode_bulk_response = client.msearch(body=episode_request)
+    episode_bulk_response = client.mget(index="podcast_episodes", body={"ids": episodes})
 
     show_bulk_response = client.mget(index="podcast_shows", body={"ids": shows})
-    for episode_response, show_response in zip(episode_bulk_response["responses"], show_bulk_response["docs"]):
+    for episode_response, show_response in zip(episode_bulk_response["docs"], show_bulk_response["docs"]):
         this_metadata = {}
-        episode_hits = episode_response["hits"]["hits"]
-        if len(episode_hits) != 0:
-            episode = episode_hits[0]["_source"]
+        if episode_response["found"]:
+            episode = episode_response["_source"]
 
             if "episode_name" in episode:
                 this_metadata["episode_name"] = episode["episode_name"]
@@ -474,10 +468,13 @@ def print_first_n_results(response, n=10):
 
 def get_first_n_results(response, n=10):
     results = []
+    ids = []
     for hit in response['hits']['hits'][:n]:
         result = hit['_source']
+        result_id = hit['_id']
         results.append(result)
-    return results
+        ids.append(result_id)
+    return results, ids
 
 
 def get_tokens(text):

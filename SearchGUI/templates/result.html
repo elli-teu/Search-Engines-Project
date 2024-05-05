@@ -61,6 +61,10 @@
           <a href="#" class="show-more">Show more</a>
           <div class="transcript-box">
             <p> <b>Time within episode: </b>{{ result.starttime }} </p>
+            <audio controls name="podcast" preload="metadata">
+		      <source src="{{ result.audio_link }}" type="audio/mp4">
+		        Your browser does not support the audio element.
+              </audio>
             <p>{{ result.transcript }}</p>
           </div>
         </div>
