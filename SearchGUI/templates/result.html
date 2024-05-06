@@ -160,18 +160,33 @@
       for (var i = 1; i <= 5; i++) {
         var sliderContainer = document.createElement('div');
         sliderContainer.className = "advanced-slider";
+
         var sliderTitle = document.createElement('p');
-        sliderTitle.textContent = sliderNames[i-1];
+        sliderTitle.textContent = sliderNames[i - 1];
         sliderContainer.appendChild(sliderTitle);
+
         var slider = document.createElement('input');
         slider.type = 'range';
         slider.name = "slider" + i.toString();
         slider.min = 0;
         slider.max = 100;
-        slider.value = initialValues[i-1];
+        slider.value = initialValues[i - 1];
         sliderContainer.appendChild(slider);
+
+        var valueDisplay = document.createElement('p');
+        valueDisplay.className = 'slider-value';
+        valueDisplay.textContent = initialValues[i - 1] / 100;
+        sliderContainer.appendChild(valueDisplay);
+
+        // Bind the value directly to the event listener
+        slider.addEventListener('input', (function(display) {
+          return function() {
+            display.textContent = this.value / 100;
+          };
+        })(valueDisplay));
+
         dropdownContent.appendChild(sliderContainer);
-        }
+      }
 
 
       for (var i = 0; i < options.length; i++) {

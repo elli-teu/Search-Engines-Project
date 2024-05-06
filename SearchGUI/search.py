@@ -204,7 +204,7 @@ def generate_query(query_string, query_type, slider_values):
         if check_char(query_string) is True:
             query = generate_smart_query(query_string)
         else:
-            
+
             query_string = check_spelling(query_string)
 
             #cl.IndicesClient(client).refresh() #Tror inte denna behövs ?
@@ -276,8 +276,8 @@ def generate_smart_query(query_string):
     must_not_occur_list = [{"term": {"transcript": token}} for token in must_not_occur_tokens]
 
     phrases = re.findall("""["']([^"]*)["']""", query_string)
-    phases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
-    must_occur_list.extend(phases_list)
+    phrases_list = [{"match_phrase": {"transcript": x}} for x in phrases]
+    must_occur_list.extend(phrases_list)
 
     should_occur_words = [x for x in words if
                           x not in must_occur_words and x not in must_not_occur_words and x not in " ".join(
@@ -305,7 +305,7 @@ def check_char(string):
 def check_spelling(query_string):
     # Börja med att kolla om querien innehåller något specialtecken - isf kör special
     """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
-    string_list = query_string.split(" ")  
+    string_list = query_string.split(" ")
     for string in string_list:
         spelling_query = {
             "query": {
@@ -315,7 +315,7 @@ def check_spelling(query_string):
         res = client.search(index=INDEX, body=spelling_query, size=50)
         if res['hits']['total']['value'] == 0:
             # Sätt query_string till_chat-gpt
-            messages = [ {"role": "system", "content":"Correct any spelling mistakes"} ] 
+            messages = [ {"role": "system", "content":"Correct any spelling mistakes"} ]
             messages.append(
                 {"role": "user", "content": query_string},
             )

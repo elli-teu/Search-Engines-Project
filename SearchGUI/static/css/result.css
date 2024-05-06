@@ -618,6 +618,11 @@ body {
   align-items: center;
 }
 
+.slider-value {
+  margin-top: 0px;
+  align: center;
+}
+
 /* phone stuff */
 @media (max-width: 1000px) {
   .v1_12 {
@@ -710,5 +715,9 @@ body {
 
   .radio-button {
     display: none;
+  }
+
+  .slider-value {
+  display: none;
   }
 }
