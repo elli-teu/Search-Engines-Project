@@ -208,7 +208,6 @@ def generate_query(query_string, query_type, slider_values):
             query_string = check_spelling(query_string)
 
             #cl.IndicesClient(client).refresh() #Tror inte denna behövs ?
-
             tokens = get_tokens(query_string)
             must_occur_list = [{"term": {"transcript": token}} for token in tokens]
             embeddings = model.encode("search_query: " + query_string, convert_to_tensor=True)  # Nyhet
@@ -302,6 +301,7 @@ def check_char(string):
     match = re.search(pattern, string)
     return match is not None
 
+
 def check_spelling(query_string):
     # Börja med att kolla om querien innehåller något specialtecken - isf kör special
     """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
@@ -327,6 +327,7 @@ def check_spelling(query_string):
             query_string = chat.choices[0].message.content
 
             break
+    return query_string
 
 
 def execute_query(query, n=10, index=INDEX):
