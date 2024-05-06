@@ -250,7 +250,7 @@ def generate_query(query_string, query_type, slider_values):
                 "knn": {
                     "field": "vector",  # Field containing the vectors
                     "query_vector": vector.tolist(),  # Vector for similarity search, kanske ska vara .toList()
-                    "k": 10,
+                    "k": 20,
                     "num_candidates": num_candidates,
                     "boost": semantic_boost
 
