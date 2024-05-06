@@ -204,39 +204,10 @@ def generate_query(query_string, query_type, slider_values):
         if check_char(query_string) is True:
             query = generate_smart_query(query_string)
         else:
-            # Börja med att kolla om querien innehåller något specialtecken - isf kör special
-            """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
-            string_list = query_string.split(" ")  
-            for string in string_list:
-                spelling_query = {
-                    "query": {
-                        "match": {"transcript": string}
-                    }
-                }
-                res = client.search(index=INDEX, body=spelling_query, size=50)
-                if res['hits']['total']['value'] == 0:
-                    # Sätt query_string till_chat-gpt
-                    messages = [ {"role": "system", "content":"Correct any spelling mistakes"} ] 
-                    messages.append(
-                        {"role": "user", "content": query_string},
-                    )
-                    chat = chat_client.chat.completions.create(
-                        messages=messages,
-                        temperature=0.1,
-                        model="gpt-3.5-turbo",
-                    )
-                    query_string = chat.choices[0].message.content
+            
+            query_string = check_spelling(query_string)
 
-                    break
-                # på vilken form skickas denna tillbaka? Hur kolla längden?
-                # Hitta " " och parsea
-            """query = {
-                "query": {
-                    "match": {"transcript": query_string}
-                }
-            }"""
-
-            cl.IndicesClient(client).refresh()
+            #cl.IndicesClient(client).refresh() #Tror inte denna behövs ?
 
             tokens = get_tokens(query_string)
             must_occur_list = [{"term": {"transcript": token}} for token in tokens]
@@ -288,61 +259,6 @@ def generate_query(query_string, query_type, slider_values):
                 "_source": ["show_id", "transcript"],
 
             }
-
-    elif query_type == QueryType.new: #Vi kan ta bort denna
-        if check_char(query_string) is True:
-            query = generate_smart_query(query_string)
-        else:
-            tokens = get_tokens(query_string)
-            must_occur_list = [{"term": {"transcript": token}} for token in tokens]
-            
-            query = {
-                "query": {
-                    "function_score": {
-                        "query": {
-                            "bool": {
-                                "should": [
-                                    {
-                                        "match": {
-                                            "transcript": {
-                                                "query": query_string,
-                                                "boost": union_boost
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "match_phrase": {
-                                            "transcript": {
-                                                "query": query_string,
-                                                "boost": phrase_boost
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "bool": {
-                                            "must": must_occur_list,
-                                            "boost": intersection_boost
-                                        }
-                                    },
-
-                                ],
-
-                            }
-                        },
-                        "script_score": {
-                            "script": {
-                                "source": "double confidence = doc['confidence'].value; return confidence * params.weight;",
-                                "params": {
-                                    "weight": confidence_boost
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            # "match": {"title" : query_string} #Skulle vilja ha tillgång till titel för att kunna söka på det
-
     else:
         raise ValueError(f"{query_type} is not a valid query type.")
     return query
@@ -385,6 +301,32 @@ def check_char(string):
     pattern = r"""["']([^"]*)["']|\\+|\\-"""
     match = re.search(pattern, string)
     return match is not None
+
+def check_spelling(query_string):
+    # Börja med att kolla om querien innehåller något specialtecken - isf kör special
+    """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
+    string_list = query_string.split(" ")  
+    for string in string_list:
+        spelling_query = {
+            "query": {
+                "match": {"transcript": string}
+            }
+        }
+        res = client.search(index=INDEX, body=spelling_query, size=50)
+        if res['hits']['total']['value'] == 0:
+            # Sätt query_string till_chat-gpt
+            messages = [ {"role": "system", "content":"Correct any spelling mistakes"} ] 
+            messages.append(
+                {"role": "user", "content": query_string},
+            )
+            chat = chat_client.chat.completions.create(
+                messages=messages,
+                temperature=0.1,
+                model="gpt-3.5-turbo",
+            )
+            query_string = chat.choices[0].message.content
+
+            break
 
 
 def execute_query(query, n=10, index=INDEX):
