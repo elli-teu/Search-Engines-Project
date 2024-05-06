@@ -590,6 +590,7 @@ body {
   top: 0; /* Align to the top */
   right: 0; /* Align to the right */
   height: 100%; /* Occupy full height of the container */
+  padding: 5px;
   padding-right: 10px; /* Add padding to create space between the image and the input */
   box-sizing: border-box; /* Include padding in the element's total width and height */
 }
@@ -605,7 +606,7 @@ body {
   display: block; /* Display sliders below one another */
   margin-bottom: 0px; /* Add some space between sliders */
   width: 92.5%;
-  top:10px;
+  top: 10px;
 }
 
 .advanced-slider p {
@@ -613,8 +614,8 @@ body {
 }
 
 .radio-button {
-    margin-top: 10px;
-    align-items: center;
+  margin-top: 10px;
+  align-items: center;
 }
 
 /* phone stuff */
@@ -695,20 +696,19 @@ body {
     text-align: left;
   }
 
+  .dropdown {
+    display: none;
+  }
 
-    .dropdown {
-      display: none;
-    }
+  .advanced-slider {
+    display: none;
+  }
 
-    .advanced-slider {
-      display: none;
-    }
+  .advanced-slider p {
+    display: none;
+  }
 
-    .advanced-slider p {
-      display: none;
-    }
-
-    .radio-button {
-        display: none;
-    }
+  .radio-button {
+    display: none;
+  }
 }
