@@ -64,7 +64,7 @@ def search_query(query, query_type, slider_values):
 
 @app.route('/result', methods=['POST', 'GET'])
 def result():
-    default_sliders = ["0", "60", "20", "90", "100"]
+    default_sliders = ["0", "60", "20", "90"]
     query_names = ['Smart query', 'Combination query']
     default_query_type = 'smart'
     if request.method == 'GET':
@@ -75,7 +75,7 @@ def result():
 
     query = request.form['query']
 
-    slider_names = ["slider" + str(i+1) for i in range(5)]
+    slider_names = ["slider" + str(i+1) for i in range(len(default_sliders))]
     sliders_found = True
     for slider in slider_names:
         if slider not in request.form:

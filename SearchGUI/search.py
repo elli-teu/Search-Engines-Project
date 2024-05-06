@@ -162,7 +162,7 @@ def get_transcript_metadata(results, ids):
 
 def generate_query(query_string, query_type, slider_values):
     """Här är värdena som går att ändra"""
-    intersection_boost, phrase_boost, union_boost, semantic_boost, confidence_boost = slider_values
+    intersection_boost, phrase_boost, union_boost, semantic_boost = slider_values
     num_candidates = 100  # Kan vara mycket större
 
     # title_boost = 0.1
