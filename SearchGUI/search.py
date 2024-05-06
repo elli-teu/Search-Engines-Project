@@ -25,7 +25,7 @@ chat_client = openai.OpenAI(
     # This is the default and can be omitted
     api_key='sk-proj-GuRuVvdJbwlXDQuQuyH0T3BlbkFJlBwVGo5RnIufufuXhhwJ',
 )
-messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
+#messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
 
 """sentences = ["This is an example sentence", "Each sentence is converted"]
 
@@ -290,25 +290,29 @@ def generate_query(query_string, query_type):
                 }
                 
                 res = client.search(index = INDEX, body = spelling_query, size= 50)
-                #print(res)
+                
                 print(res['hits']['total']['value'])
                 if res['hits']['total']['value'] == 0:
                     #Sätt query_string till_chat-gpt
-                    #Bryt
-                    print("hi there")
-                    messages.append(
-                        {"role": "user", "content": query_string},
-                    )
+                    messages = newMessage(query_string)
                     #Lägga till temperatur = 0.1?
                     chat = chat_client.chat.completions.create(
                         messages = messages,
-                    
+                        temperature=0.1,
                     
                         model="gpt-3.5-turbo",
                     )
                     query_string = chat.choices[0].message.content
                     print(f"ChatGPT: {query_string}")
-                    messages.append({"role": "assistant", "content": query_string})
+                    # Regular expression pattern to match text between double quotes
+                    pattern = r'"(.*?)"'
+
+                    # Find all matches
+                    matches = re.findall(pattern, query_string)
+                    if len(matches) > 0:
+                        query_string = matches[0]
+                    print(f"new ChatGPT: {query_string}")
+                    #messages.append({"role": "assistant", "content": query_string})
 
                     break
                 #på vilken form skickas denna tillbaka? Hur kolla längden?
@@ -582,3 +586,10 @@ def get_tokens(text):
 
 # Initialize Elasticsearch client
 client = Elasticsearch(ADDRESS, api_key=API_KEY, verify_certs=False)
+
+def newMessage(query):
+    messages = [ {"role": "system", "content":"Correct any spelling misstakes"} ] #För att initialisera gpt
+    messages.append(
+                        {"role": "user", "content": query,},
+                    )
+    return messages
