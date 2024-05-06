@@ -141,7 +141,7 @@
   // Function to generate sliders
   function generateSliders(initialValues, options, queryNames, selectedQueryType) {
     var dropdownContent = document.getElementById('dropdownContent');
-    sliderNames = ["Intersection boost", "Phrase boost", "Union boost", "Semantic boost", "Confidence boost"]
+    sliderNames = ["Intersection boost", "Phrase boost", "Union boost", "Semantic boost"]
     var sliders = dropdownContent.getElementsByClassName('advanced-slider');
     if (sliders.length > 0){
       while (sliders[0]) {
@@ -157,7 +157,7 @@
     }
     else{
       // Generate five sliders
-      for (var i = 1; i <= 5; i++) {
+      for (var i = 1; i <= sliderNames.length; i++) {
         var sliderContainer = document.createElement('div');
         sliderContainer.className = "advanced-slider";
 
