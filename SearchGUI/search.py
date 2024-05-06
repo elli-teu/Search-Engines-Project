@@ -277,44 +277,7 @@ def generate_query(query_string, query_type):
             }
         else:
         
-            #Börja med att kolla om querien innehåller något specialtecken - isf kör special
-            """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
-            print(type(query_string))
-            string_list = query_string.split(" ") #Kanske strunta i
-            for string in string_list:
-                print(string)
-                spelling_query = {
-                    "query": { 
-                        "match": {"transcript": string}
-                    }
-                }
-                
-                res = client.search(index = INDEX, body = spelling_query, size= 50)
-                
-                print(res['hits']['total']['value'])
-                if res['hits']['total']['value'] == 0:
-                    #Sätt query_string till_chat-gpt
-                    messages = newMessage(query_string)
-                    #Lägga till temperatur = 0.1?
-                    chat = chat_client.chat.completions.create(
-                        messages = messages,
-                        temperature=0.1,
-                    
-                        model="gpt-3.5-turbo",
-                    )
-                    query_string = chat.choices[0].message.content
-                    print(f"ChatGPT: {query_string}")
-                    # Regular expression pattern to match text between double quotes
-                    pattern = r'"(.*?)"'
-
-                    # Find all matches
-                    matches = re.findall(pattern, query_string)
-                    if len(matches) > 0:
-                        query_string = matches[0]
-                    print(f"new ChatGPT: {query_string}")
-                    #messages.append({"role": "assistant", "content": query_string})
-
-                    break
+            query_string = check_spelling(query_string)
                 #på vilken form skickas denna tillbaka? Hur kolla längden?
                 #Hitta " " och parsea
             """query = {
@@ -593,3 +556,43 @@ def newMessage(query):
                         {"role": "user", "content": query,},
                     )
     return messages
+def check_spelling(query_string):
+    """Gå igenom alla ord, om någon returnerar 0 kan vi tolka det som att det är felstavat -> kör in hela querien i chatGPT"""
+    print(type(query_string))
+    string_list = query_string.split(" ") #Kanske strunta i
+    for string in string_list:
+        print(string)
+        spelling_query = {
+            "query": { 
+                "match": {"transcript": string}
+            }
+        }
+        
+        res = client.search(index = INDEX, body = spelling_query, size= 50)
+        
+        print(res['hits']['total']['value'])
+        if res['hits']['total']['value'] == 0:
+            #Sätt query_string till_chat-gpt
+            messages = newMessage(query_string)
+            #Lägga till temperatur = 0.1?
+            chat = chat_client.chat.completions.create(
+                messages = messages,
+                temperature=0.1,
+            
+                model="gpt-3.5-turbo",
+            )
+            query_string = chat.choices[0].message.content
+            print(f"ChatGPT: {query_string}")
+            # Regular expression pattern to match text between double quotes
+            pattern = r'"(.*?)"'
+
+            # Find all matches
+            matches = re.findall(pattern, query_string)
+            if len(matches) > 0:
+                query_string = matches[0]
+            print(f"new ChatGPT: {query_string}")
+            #messages.append({"role": "assistant", "content": query_string})
+
+            break
+
+    return query_string
