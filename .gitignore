@@ -24,6 +24,8 @@ hs_err_pid*
 replay_pid*
 
 dataset/
+dataset_subset/
+elastic_backup/
 
 __pycache__/
 *.pyc
