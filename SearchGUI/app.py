@@ -92,7 +92,7 @@ def result():
     try:
         query_type = request.form['query_type']
     except KeyError:
-        query_type = default_query
+        query_type = default_query_type
     results = search_query(query, query_type, normalized_sliders)
     return render_template('result.html', results=results, old_query=query, sliderPositions=slider_values,
                            showSliders=sliders_found,
