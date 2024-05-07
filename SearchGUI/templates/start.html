@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+    <link href="static/css/start.css" rel="stylesheet" />
+    <title>PodysseyCast</title>
+    <link rel="icon" href="static/images/icon.png" type="image/png"/>
+</head>
+<body>
+<div class="v3_2">
+    <form id="searchForm" action="/result" method="post" onsubmit="return validateForm()">
+      <div class="v3_17-container">
+        <input id="searchInput" class="v3_17" name="query" placeholder="Enter your search query">
+        <button type="submit" class="search-button">
+          <img src="static/images/search_icon.png" class="search-image" />
+        </button>
+      </div>
+    </form>
+    <div class="name"></div>
+    <div class="v3_26">
+        <span class="v3_25">PodysseyCast</span>
+        <div class="v3_24">
+    </div>
+    </div>
+</div>
+</body>
+
+<script>
+  function validateForm() {
+    var query = document.getElementById('searchInput').value;
+    if (query.trim() === '') {
+      return false; // Prevent form submission
+    }
+    return true; // Allow form submission
+  }
+</script>
+</html>
