@@ -64,9 +64,9 @@ def search_query(query, query_type, slider_values):
 
 @app.route('/result', methods=['POST', 'GET'])
 def result():
-    default_sliders = ["0", "60", "20", "90"]
+    default_sliders = ["20", "5", "5", "90"]
     query_names = ['Smart query', 'Combination query']
-    default_query_type = 'smart'
+    default_query_type = 'combi'
     if request.method == 'GET':
         return render_template('result.html', results=[], old_query="", sliderPositions=default_sliders,
                                showSliders=False,
@@ -92,7 +92,7 @@ def result():
     try:
         query_type = request.form['query_type']
     except KeyError:
-        query_type = "smart"
+        query_type = default_query_type
     results = search_query(query, query_type, normalized_sliders)
     return render_template('result.html', results=results, old_query=query, sliderPositions=slider_values,
                            showSliders=sliders_found,
