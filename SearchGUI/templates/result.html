@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css?family=Inter&display=swap"
+      rel="stylesheet"
+    />
+    <link href="./static/css/result.css" rel="stylesheet" />
+    <style>
+      /* Define the CSS for the transcript box */
+      .transcript-box {
+        border: 1px solid #ccc; /* Border style */
+        padding: 10px; /* Padding around the content */
+        margin-top: 10px; /* Margin from the top */
+        background-color: #f9f9f9; /* Background color */
+        border-radius: 5px; /* Rounded corners */
+        justify-content: center; /* Center horizontally */
+        align-items: center;
+      }
+
+      /* Hide the overflow text */
+      .overflow-hidden {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .show-more {
+        color: grey; /* Set color to grey */
+        text-decoration: none; /* Remove underline */
+        display: none; /* Initially hide the link */
+      }
+    </style>
+    <title>PodysseyCast</title>
+    <link rel="icon" href="static/images/icon.png" type="image/png"/>
+  </head>
+  <body>
+    <div class="v1_2">
+      <div class="v1_12">
+        {% for result in results %}
+        <div class="result-box">
+          {% if result.pod_link and result.pod_link != "null" %}
+            <a href="{{ result.pod_link }}" target="{{ result.pod_link }}">
+              <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
+            </a>
+            <h3>
+              <a href="{{ result.pod_link }}" target="{{ result.pod_link }}">
+                {{ result.podcast_name }}
+              </a>
+            </h3>
+          {% else %}
+            <img class="img" src="{{ result.image }}" alt="Image" height="100" width="100" onerror="this.onerror=null;this.src='static/images/image_placeholder.png';"/>
+            <h3>{{ result.podcast_name }}</h3>
+          {% endif %}
+
+          <p class="description overflow-hidden">{{ result.podcast_description }}</p>
+          <a href="#" class="show-more">Show more</a>
+          <h3>{{ result.episode_name}}</h3>
+          <p class="description overflow-hidden">
+            {{ result.episode_description }}
+          </p>
+          <a href="#" class="show-more">Show more</a>
+          <div class="transcript-box">
+            <p> <b>Time within episode: </b>{{ result.starttime }} </p>
+            <audio controls name="podcast" preload="none">
+		      <source src="{{ result.audio_link }}" type="audio/mp4">
+		        Your browser does not support the audio element.
+              </audio>
+            <p>{{ result.transcript }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <form id="searchForm" action="/result" method="post" onsubmit="return validateForm(this.query.value)">
+
+        <div class="v3_35-container">
+          {% if old_query != "" %}
+            <input class="v3_35" name="query" value="{{ old_query }}"  placeholder="Enter your search query">
+          {% else %}
+            <input class="v3_35" name="query" value = "" placeholder="Enter your search query">
+          {% endif %}
+          <button class="search-button">
+            <img src="static/images/search_icon.png" class="search-image" />
+          </button>
+        </div>
+        <div class="dropdown" id="dropdownContent">
+          <!-- This div will be populated with sliders when the dropdown is clicked -->
+          <div class="radio-container" id="radioContainer">
+            <!-- Radio buttons will be added here -->
+          </div>
+        </div>
+      </form>
+      <button class="dropdown" onclick="generateSliders({{ sliderPositions }}, {{ searchOptions }}, {{ searchOptionNames }}, '{{ selectedQueryType }}')">Advanced Options</button>
+      <div class="name"></div>
+      <div class="v1_48">
+        <form action="/" method="get">
+          <button class="v1_7 transparent-button">PodysseyCast</button>
+          <button class="v1_9 transparent-button"></button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // JavaScript to toggle visibility of description when "Show more" is clicked
+      document.addEventListener("DOMContentLoaded", function () {
+        var descriptions = document.querySelectorAll(".description");
+        descriptions.forEach(function (description) {
+          if (description.scrollWidth > description.clientWidth) {
+            // Show the "Show more" link if the description can be expanded
+            var showMoreLink = description.nextElementSibling;
+            showMoreLink.style.display = "inline";
+          }
+        });
+
+        var showMoreLinks = document.querySelectorAll(".show-more");
+        showMoreLinks.forEach(function (link) {
+          link.addEventListener("click", function (event) {
+            event.preventDefault();
+            var description = this.previousElementSibling;
+            description.classList.toggle("overflow-hidden");
+            if (description.classList.contains("overflow-hidden")) {
+              this.textContent = "Show more";
+            } else {
+              this.textContent = "Show less";
+            }
+          });
+        });
+      });
+
+    </script>
+  </body>
+<script>
+  function validateForm(query) {
+    if (query.trim() === '') {
+      return false;
+    }
+    return true;
+  }
+</script>
+
+<script>
+  // Function to generate sliders
+  function generateSliders(initialValues, options, queryNames, selectedQueryType) {
+    var dropdownContent = document.getElementById('dropdownContent');
+    sliderNames = ["Intersection boost", "Phrase boost", "Union boost", "Semantic boost"]
+    var sliders = dropdownContent.getElementsByClassName('advanced-slider');
+    if (sliders.length > 0){
+      while (sliders[0]) {
+        sliders[0].parentNode.removeChild(sliders[0]);
+      }
+    }
+
+    var radioButtons = dropdownContent.getElementsByClassName('radio-button');
+    if (radioButtons.length > 0){
+      while (radioButtons[0]) {
+        radioButtons[0].parentNode.removeChild(radioButtons[0]);
+      }
+    }
+    else{
+      // Generate five sliders
+      for (var i = 1; i <= sliderNames.length; i++) {
+        var sliderContainer = document.createElement('div');
+        sliderContainer.className = "advanced-slider";
+
+        var sliderTitle = document.createElement('p');
+        sliderTitle.textContent = sliderNames[i - 1];
+        sliderContainer.appendChild(sliderTitle);
+
+        var slider = document.createElement('input');
+        slider.type = 'range';
+        slider.name = "slider" + i.toString();
+        slider.min = 0;
+        slider.max = 100;
+        slider.value = initialValues[i - 1];
+        sliderContainer.appendChild(slider);
+
+        var valueDisplay = document.createElement('p');
+        valueDisplay.className = 'slider-value';
+        valueDisplay.textContent = initialValues[i - 1] / 100;
+        sliderContainer.appendChild(valueDisplay);
+
+        // Bind the value directly to the event listener
+        slider.addEventListener('input', (function(display) {
+          return function() {
+            display.textContent = this.value / 100;
+          };
+        })(valueDisplay));
+
+        dropdownContent.appendChild(sliderContainer);
+      }
+
+
+      for (var i = 0; i < options.length; i++) {
+        var radioContainer = document.createElement('div');
+        radioContainer.className = "radio-button";
+        var radioInput = document.createElement('input');
+        radioInput.type = "radio";
+        radioInput.name = "query_type";
+        radioInput.value = options[i];
+        if (options[i] == selectedQueryType) {
+          radioInput.checked = true;
+        }
+        var radioTitle = document.createElement('span'); // Use <span> instead of <p> for inline elements
+        radioTitle.textContent = queryNames[i];
+
+        radioContainer.appendChild(radioInput);
+        radioContainer.appendChild(radioTitle);
+        dropdownContent.appendChild(radioContainer);
+      }
+
+    }
+  }
+</script>
+{% if showSliders %}
+  <script>
+    generateSliders({{ sliderPositions|tojson }}, {{ searchOptions|tojson }}, {{ searchOptionNames|tojson }}, '{{ selectedQueryType }}')
+  </script>
+{% endif %}
+</html>

@@ -1,0 +1,124 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  font-size: 14px;
+}
+.v3_2 {
+  width: 100%;
+  height: 1080px;
+  background: rgba(255, 255, 255, 1);
+  opacity: 1;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  overflow: hidden;
+}
+.v3_17 {
+  width: 90%;
+  height: 101%;
+  background: rgba(255, 255, 255, 1);
+  opacity: 1;
+  position: absolute;
+  left: 0%;
+  top: 0px;
+  border: 0px solid rgba(0, 0, 0, 0);
+  padding: 10px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  overflow: hidden;
+  outline: none;
+}
+.v3_7 {
+  width: 1px;
+  height: 14px;
+  background: rgba(217, 217, 217, 1);
+  opacity: 1;
+  position: absolute;
+  top: 229px;
+  left: 1366px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  overflow: hidden;
+}
+.name {
+  color: #fff;
+}
+.v3_26 {
+  width: 100%;
+  height: 15%;
+  background: rgba(38, 38, 38, 1);
+  opacity: 1;
+  position: absolute;
+  left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  overflow: hidden;
+}
+.v3_25 {
+  width: 209px;
+  color: rgba(255, 255, 255, 1);
+  position: absolute;
+  left: 50%;
+  top: 65%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  font-family: Inter;
+  font-weight: Semi Bold;
+  font-size: 30px;
+  opacity: 1;
+  text-align: left;
+}
+.v3_24 {
+  width: 110px;
+  height: 80px;
+  background: url("../images/v1_9.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  opacity: 1;
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+}
+
+.search-image {
+  position: absolute; /* Set position to absolute */
+  top: 0; /* Align to the top */
+  right: 0; /* Align to the right */
+  height: 100%; /* Occupy full height of the container */
+  padding: 5px;
+  padding-right: 10px; /* Add padding to create space between the image and the input */
+  box-sizing: border-box; /* Include padding in the element's total width and height */
+}
+
+.v3_17-container {
+  position: relative; /* Set position to relative */
+  width: 663px;
+  height: 52px;
+  background: rgba(255, 255, 255, 1);
+  opacity: 1;
+  position: absolute;
+  top: 242px;
+  left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  border: 1px solid rgba(0, 0, 0, 0.6399999856948853);
+  padding: 10px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  overflow: hidden;
+}
+
+.search-button {
+  cursor: pointer; /* Show pointer cursor on hover */
+}
