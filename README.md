@@ -4,6 +4,9 @@
 
 <img src="SearchGUI/static/images/icon.png" alt="PodysseyCast Logo" width="100" height="100">
 
+Visit our website at: http://www.podysseycast.se
+In case that the domain is no longer available, try: http://129.151.196.60/
+
 </div>
 
 
